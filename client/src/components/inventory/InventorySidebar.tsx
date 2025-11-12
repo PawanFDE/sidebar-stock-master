@@ -19,7 +19,6 @@ import { useState } from "react";
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Inventory", url: "/inventory", icon: Package },
-  { title: "Add Item", url: "/add-item", icon: Plus },
   { title: "Categories", url: "/categories", icon: FolderOpen },
 ];
 
@@ -47,6 +46,7 @@ export function InventorySidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
+                      key={item.title} 
                       to={item.url} 
                       end
                       className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
@@ -62,28 +62,7 @@ export function InventorySidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Categories</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {categories.map((category) => (
-                <SidebarMenuItem key={category.id}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={`/categories/${category.name}`} 
-                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-                      activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-                    >
-                      <FolderOpen className="h-4 w-4" />
-                      <span>{category.name}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        
       </SidebarContent>
     </Sidebar>
   );

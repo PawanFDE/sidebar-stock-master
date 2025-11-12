@@ -94,7 +94,7 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <p className="font-medium text-sm">{item.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      Updated {item.lastUpdated.toLocaleDateString()}
+                      Updated {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                 </div>
