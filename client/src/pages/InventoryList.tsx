@@ -91,7 +91,7 @@ export default function InventoryList() {
           {editingItem && (
             <ItemForm
               item={editingItem}
-              categories={categories.map(c => c.name)}
+              categories={categories}
               onSubmit={handleUpdate}
               onCancel={() => setEditingItem(null)}
             />

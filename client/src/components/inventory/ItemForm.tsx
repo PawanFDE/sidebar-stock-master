@@ -1,6 +1,6 @@
 // View Component - Add/Edit Item Form
 import { useState } from "react";
-import { InventoryItem } from "@/models/inventory";
+import { InventoryItem, Category } from "@/models/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ItemFormProps {
   item?: InventoryItem;
-  categories: string[];
+  categories: Category[];
   onSubmit: (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => void;
   onCancel?: () => void;
 }
@@ -82,8 +82,8 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

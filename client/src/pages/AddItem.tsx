@@ -28,7 +28,7 @@ export default function AddItem() {
       </div>
 
       <ItemForm
-        categories={categories.map(c => c.name)}
+        categories={categories}
         onSubmit={handleSubmit}
         onCancel={() => navigate('/inventory')}
       />

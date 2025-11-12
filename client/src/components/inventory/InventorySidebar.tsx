@@ -13,6 +13,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useInventoryController } from "@/controllers/useInventoryController";
+import { useState } from "react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -23,6 +25,10 @@ const navigationItems = [
 
 export function InventorySidebar() {
   const { open } = useSidebar();
+  const { categories } = useInventoryController();
+
+
+
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -52,6 +58,29 @@ export function InventorySidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Categories</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {categories.map((category) => (
+                <SidebarMenuItem key={category.id}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={`/categories/${category.name}`} 
+                      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+                      activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      <span>{category.name}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

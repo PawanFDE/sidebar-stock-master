@@ -1,99 +1,64 @@
-// Controller - Business logic and state management
-import { useState, useCallback, useMemo } from 'react';
-import { InventoryItem, getStockStatus, DashboardStats, Category } from '@/models/inventory';
-import { toast } from '@/hooks/use-toast';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { InventoryItem, Category, DashboardStats } from '../models/inventory';
+import { useToast } from '../components/ui/use-toast'; // Assuming this is the correct path
 
-// Mock data for initial state
-const mockCategories: Category[] = [
-  { id: '1', name: 'Electronics', description: 'Electronic devices and components', itemCount: 0 },
-  { id: '2', name: 'Furniture', description: 'Office and home furniture', itemCount: 0 },
-  { id: '3', name: 'Supplies', description: 'Office supplies and materials', itemCount: 0 },
-  { id: '4', name: 'Tools', description: 'Hardware and tools', itemCount: 0 },
-];
+// Utility for API calls
+async function api(endpoint: string, method: string = 'GET', data?: any) {
+  const config: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
 
-const mockItems: InventoryItem[] = [
-  {
-    id: '1',
-    name: 'Laptop Dell XPS 15',
-    sku: 'ELEC-001',
-    category: 'Electronics',
-    quantity: 45,
-    minStock: 10,
-    maxStock: 100,
-    price: 1299.99,
-    supplier: 'Tech Distributors Inc.',
-    location: 'Warehouse A, Shelf 12',
-    status: 'in-stock',
-    lastUpdated: new Date(),
-    description: 'High-performance laptop for business use',
-  },
-  {
-    id: '2',
-    name: 'Office Chair Ergonomic',
-    sku: 'FURN-023',
-    category: 'Furniture',
-    quantity: 8,
-    minStock: 15,
-    maxStock: 50,
-    price: 299.99,
-    supplier: 'Office Furniture Co.',
-    location: 'Warehouse B, Section 3',
-    status: 'low-stock',
-    lastUpdated: new Date(),
-    description: 'Comfortable ergonomic office chair',
-  },
-  {
-    id: '3',
-    name: 'Printer Paper A4',
-    sku: 'SUPP-105',
-    category: 'Supplies',
-    quantity: 0,
-    minStock: 50,
-    maxStock: 500,
-    price: 4.99,
-    supplier: 'Paper World',
-    location: 'Warehouse A, Shelf 5',
-    status: 'out-of-stock',
-    lastUpdated: new Date(),
-    description: 'Standard A4 printer paper, 500 sheets per ream',
-  },
-  {
-    id: '4',
-    name: 'Wireless Mouse',
-    sku: 'ELEC-045',
-    category: 'Electronics',
-    quantity: 120,
-    minStock: 30,
-    maxStock: 200,
-    price: 24.99,
-    supplier: 'Tech Distributors Inc.',
-    location: 'Warehouse A, Shelf 15',
-    status: 'in-stock',
-    lastUpdated: new Date(),
-    description: 'Ergonomic wireless mouse with USB receiver',
-  },
-  {
-    id: '5',
-    name: 'Standing Desk',
-    sku: 'FURN-087',
-    category: 'Furniture',
-    quantity: 12,
-    minStock: 5,
-    maxStock: 30,
-    price: 549.99,
-    supplier: 'Office Furniture Co.',
-    location: 'Warehouse B, Section 1',
-    status: 'in-stock',
-    lastUpdated: new Date(),
-    description: 'Adjustable height standing desk',
-  },
-];
+  if (data) {
+    config.body = JSON.stringify(data);
+  }
+
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, config);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Something went wrong');
+  }
+
+  return response.json();
+}
 
 export const useInventoryController = () => {
-  const [items, setItems] = useState<InventoryItem[]>(mockItems);
-  const [categories] = useState<Category[]>(mockCategories);
+  const { toast } = useToast();
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const fetchItemsAndCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [itemsData, categoriesData] = await Promise.all([
+        api('/inventory'), // GET /api/inventory
+        api('/categories'), // GET /api/categories
+      ]);
+      setItems(itemsData);
+      setCategories(categoriesData);
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error fetching data',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchItemsAndCategories();
+  }, [fetchItemsAndCategories]);
 
   // Filtered items based on search and category
   const filteredItems = useMemo(() => {
@@ -121,52 +86,90 @@ export const useInventoryController = () => {
   }, [items, categories]);
 
   // Add new item
-  const addItem = useCallback((item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
-    const newItem: InventoryItem = {
-      ...item,
-      id: Date.now().toString(),
-      status: getStockStatus(item.quantity, item.minStock),
-      lastUpdated: new Date(),
-    };
-    
-    setItems(prev => [...prev, newItem]);
-    toast({
-      title: 'Item added',
-      description: `${newItem.name} has been added to inventory.`,
-    });
-  }, []);
+  const addItem = useCallback(async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
+    try {
+      const newItem = await api('/inventory', 'POST', item); // POST /api/inventory
+      setItems(prev => [...prev, newItem]);
+      toast({
+        title: 'Item added',
+        description: `${newItem.name} has been added to inventory.`,
+      });
+      // Re-fetch all data to update categories and ensure data consistency
+      fetchItemsAndCategories();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error adding item',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [fetchItemsAndCategories]);
 
   // Update item
-  const updateItem = useCallback((id: string, updates: Partial<InventoryItem>) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, ...updates, lastUpdated: new Date() };
-        if (updates.quantity !== undefined || updates.minStock !== undefined) {
-          updated.status = getStockStatus(
-            updates.quantity ?? item.quantity,
-            updates.minStock ?? item.minStock
-          );
-        }
-        return updated;
-      }
-      return item;
-    }));
-    toast({
-      title: 'Item updated',
-      description: 'Inventory item has been updated successfully.',
-    });
-  }, []);
+  const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+    try {
+      const updatedItem = await api(`/inventory/${id}`, 'PUT', updates); // PUT /api/inventory/:id
+      setItems(prev => prev.map(item => (item.id === id ? updatedItem : item)));
+      toast({
+        title: 'Item updated',
+        description: 'Inventory item has been updated successfully.',
+      });
+      // Re-fetch all data to update categories and ensure data consistency
+      fetchItemsAndCategories();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error updating item',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [fetchItemsAndCategories]);
 
   // Delete item
-  const deleteItem = useCallback((id: string) => {
-    const item = items.find(i => i.id === id);
-    setItems(prev => prev.filter(item => item.id !== id));
-    toast({
-      title: 'Item deleted',
-      description: `${item?.name} has been removed from inventory.`,
-      variant: 'destructive',
-    });
-  }, [items]);
+  const deleteItem = useCallback(async (id: string) => {
+    try {
+      const itemToDelete = items.find(i => i.id === id);
+      await api(`/inventory/${id}`, 'DELETE'); // DELETE /api/inventory/:id
+      setItems(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: 'Item deleted',
+        description: `${itemToDelete?.name} has been removed from inventory.`,
+        variant: 'destructive',
+      });
+      // Re-fetch all data to update categories and ensure data consistency
+      fetchItemsAndCategories();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error deleting item',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [items, fetchItemsAndCategories]);
+
+  // Add new category
+  const addCategory = useCallback(async (categoryName: string) => {
+    try {
+      const newCategory = await api('/categories', 'POST', { name: categoryName }); // POST /api/categories
+      setCategories(prev => [...prev, newCategory]);
+      toast({
+        title: 'Category added',
+        description: `${newCategory.name} has been added as a new category.`,
+      });
+      return newCategory;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error adding category',
+        description: err.message,
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, []);
 
   return {
     items: filteredItems,
@@ -180,5 +183,8 @@ export const useInventoryController = () => {
     addItem,
     updateItem,
     deleteItem,
+    addCategory, // Added addCategory to the returned object
+    loading,
+    error,
   };
 };
