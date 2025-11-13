@@ -81,7 +81,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl p-4">
         <DialogHeader>
           <DialogTitle>
             {type === 'in' ? 'Add Stock (In)' : type === 'out' ? 'Transfer Stock (Out)' : 'Transfer Item'} for {item.name}
