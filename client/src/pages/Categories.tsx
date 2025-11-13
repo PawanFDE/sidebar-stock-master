@@ -1,12 +1,24 @@
 // View - Categories Page
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventoryController } from "@/controllers/useInventoryController";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function Categories() {
-  const { categories, allItems, addCategory } = useInventoryController();
+  const { categories, allItems, addCategory, deleteCategory } = useInventoryController();
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const categoriesWithCount = categories.map(cat => ({
@@ -19,6 +31,10 @@ export default function Categories() {
       addCategory(newCategoryName.trim());
       setNewCategoryName("");
     }
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    deleteCategory(id);
   };
 
   return (
@@ -49,7 +65,7 @@ export default function Categories() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categoriesWithCount.map((category) => (
-          <Card key={category.id} className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card key={category.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -58,7 +74,30 @@ export default function Categories() {
                   </div>
                   {category.name}
                 </CardTitle>
-                <Badge variant="secondary">{category.itemCount} items</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{category.itemCount} items</Badge>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the category.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteCategory(category.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

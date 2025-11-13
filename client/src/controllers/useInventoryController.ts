@@ -171,6 +171,29 @@ export const useInventoryController = () => {
     }
   }, []);
 
+  // Delete category
+  const deleteCategory = useCallback(async (id: string) => {
+    try {
+      const categoryToDelete = categories.find(c => c.id === id);
+      await api(`/categories/${id}`, 'DELETE'); // DELETE /api/categories/:id
+      setCategories(prev => prev.filter(category => category.id !== id));
+      toast({
+        title: 'Category deleted',
+        description: `${categoryToDelete?.name} has been removed.`,
+        variant: 'destructive',
+      });
+      // Re-fetch all data to update categories and ensure data consistency
+      fetchItemsAndCategories();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error deleting category',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [categories, fetchItemsAndCategories]);
+
   return {
     items: filteredItems,
     allItems: items,
@@ -183,7 +206,8 @@ export const useInventoryController = () => {
     addItem,
     updateItem,
     deleteItem,
-    addCategory, // Added addCategory to the returned object
+    addCategory,
+    deleteCategory,
     loading,
     error,
   };
