@@ -194,6 +194,52 @@ export const useInventoryController = () => {
     }
   }, [categories, fetchItemsAndCategories]);
 
+  // Create a new transaction
+  const createTransaction = useCallback(async (transactionData: {
+    itemId: string;
+    type: 'in' | 'out';
+    quantity: number;
+    branch?: string;
+  }) => {
+    try {
+      const { item: updatedItem } = await api('/transactions', 'POST', transactionData); // POST /api/transactions
+      setItems(prev => prev.map(item => (item.id === updatedItem.id ? updatedItem : item)));
+      toast({
+        title: 'Transaction successful',
+        description: `Stock for ${updatedItem.name} has been updated.`,
+      });
+      // Re-fetch all data to update categories and ensure data consistency
+      fetchItemsAndCategories();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Transaction failed',
+        description: err.message,
+        variant: 'destructive',
+      });
+    }
+  }, [fetchItemsAndCategories]);
+
+  // Get all transferred items
+  const getTransferredItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const transferredItems = await api('/transactions/transferred-items'); // GET /api/transactions/transferred-items
+      return transferredItems;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error fetching transferred items',
+        description: err.message,
+        variant: 'destructive',
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     items: filteredItems,
     allItems: items,
@@ -208,6 +254,8 @@ export const useInventoryController = () => {
     deleteItem,
     addCategory,
     deleteCategory,
+    createTransaction,
+    getTransferredItems,
     loading,
     error,
   };

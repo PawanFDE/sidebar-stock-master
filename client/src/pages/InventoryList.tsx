@@ -15,6 +15,7 @@ import { Search, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ItemForm } from "@/components/inventory/ItemForm";
+import { TransactionForm } from "@/components/inventory/TransactionForm";
 import { InventoryItem } from "@/models/inventory";
 
 export default function InventoryList() {
@@ -28,9 +29,11 @@ export default function InventoryList() {
     setSelectedCategory,
     updateItem,
     deleteItem,
+    createTransaction,
   } = useInventoryController();
 
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [transactionItem, setTransactionItem] = useState<InventoryItem | null>(null);
 
   const handleEdit = (item: InventoryItem) => {
     setEditingItem(item);
@@ -41,6 +44,20 @@ export default function InventoryList() {
       updateItem(editingItem.id, updates);
       setEditingItem(null);
     }
+  };
+
+  const handleTransaction = (item: InventoryItem) => {
+    setTransactionItem(item);
+  };
+
+  const handleCreateTransaction = (transactionData: {
+    itemId: string;
+    type: 'in' | 'out';
+    quantity: number;
+    branch?: string;
+  }) => {
+    createTransaction(transactionData);
+    setTransactionItem(null);
   };
 
   return (
@@ -81,7 +98,12 @@ export default function InventoryList() {
         </Select>
       </div>
 
-      <InventoryTable items={items} onEdit={handleEdit} onDelete={deleteItem} />
+      <InventoryTable
+        items={items}
+        onEdit={handleEdit}
+        onDelete={deleteItem}
+        onTransaction={handleTransaction}
+      />
 
       <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -98,6 +120,13 @@ export default function InventoryList() {
           )}
         </DialogContent>
       </Dialog>
+
+      <TransactionForm
+        item={transactionItem}
+        isOpen={!!transactionItem}
+        onClose={() => setTransactionItem(null)}
+        onSubmit={handleCreateTransaction}
+      />
     </div>
   );
 }

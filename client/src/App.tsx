@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import InventoryList from "./pages/InventoryList";
 import AddItem from "./pages/AddItem";
 import Categories from "./pages/Categories";
+import TransferredItemsList from "./pages/TransferredItemsList";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                   <Route path="/inventory" element={<InventoryList />} />
                   <Route path="/add-item" element={<AddItem />} />
                   <Route path="/categories" element={<Categories />} />
+                  <Route path="/transferred-items" element={<TransferredItemsList />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -21,15 +21,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
   onDelete: (id: string) => void;
+  onTransaction: (item: InventoryItem) => void;
 }
 
-export function InventoryTable({ items, onEdit, onDelete }: InventoryTableProps) {
+export function InventoryTable({ items, onEdit, onDelete, onTransaction }: InventoryTableProps) {
   const getStatusBadge = (status: InventoryItem['status']) => {
     const variants = {
       'in-stock': 'default',
@@ -94,6 +95,14 @@ export function InventoryTable({ items, onEdit, onDelete }: InventoryTableProps)
                       className="hover:bg-primary/10 hover:text-primary"
                     >
                       <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onTransaction(item)}
+                      className="hover:bg-blue-500/10 hover:text-blue-500"
+                    >
+                      <ArrowRightLeft className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
