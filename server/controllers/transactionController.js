@@ -63,6 +63,67 @@ const createTransaction = async (req, res) => {
   }
 };
 
+// @desc    Transfer an inventory item to a branch
+// @route   POST /api/transactions/transfer
+// @access  Public
+const transferItem = async (req, res) => {
+  const { itemId, quantity, branch, assetNumber, model, serialNumber, itemTrackingId, reason } = req.body;
+
+  if (!itemId || !quantity || !branch || !itemTrackingId) {
+    return res.status(400).json({ message: 'Missing required fields for transfer: itemId, quantity, branch, itemTrackingId' });
+  }
+
+  try {
+    const item = await InventoryItem.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({ message: 'Inventory item not found' });
+    }
+
+    if (item.quantity < quantity) {
+      return res.status(400).json({ message: 'Insufficient stock for this transfer' });
+    }
+
+    // Decrement quantity from current location
+    item.quantity -= quantity;
+    // Update item's location
+    item.location = branch;
+
+    // Determine item status based on stock levels
+    if (item.quantity <= item.minStock && item.quantity > 0) {
+      item.status = 'low-stock';
+    } else if (item.quantity === 0) {
+      item.status = 'out-of-stock';
+    } else {
+      item.status = 'in-stock';
+    }
+
+    const updatedItem = await item.save();
+
+    // Create the transfer transaction
+    const transaction = new Transaction({
+      itemId,
+      type: 'transfer',
+      quantity,
+      branch,
+      assetNumber,
+      model,
+      serialNumber,
+      itemTrackingId,
+      reason,
+    });
+
+    const createdTransaction = await transaction.save();
+
+    res.status(201).json({
+      transaction: createdTransaction,
+      item: updatedItem,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all transactions for a specific item
 // @route   GET /api/transactions/:itemId
 // @access  Public
@@ -135,37 +196,47 @@ const getItemsByBranch = async (req, res) => {
 const getAllTransferredItems = async (req, res) => {
   try {
     const transferredItems = await Transaction.aggregate([
-      { $match: { type: { $in: ['out', 'return'] } } },
-      {
-        $group: {
-          _id: { branch: '$branch', itemId: '$itemId' },
-          netQuantity: {
-            $sum: {
-              $cond: [{ $eq: ['$type', 'out'] }, '$quantity', { $multiply: ['$quantity', -1] }],
-            },
-          },
-        },
-      },
-      { $match: { netQuantity: { $gt: 0 } } },
+      { $match: { type: 'transfer' } }, // Only match 'transfer' type transactions
       {
         $lookup: {
-          from: 'inventoryitems',
-          localField: '_id.itemId',
+          from: 'inventoryitems', // The collection name for InventoryItem model
+          localField: 'itemId',
           foreignField: '_id',
           as: 'itemDetails',
         },
       },
-      { $unwind: '$itemDetails' },
+      { $unwind: '$itemDetails' }, // Deconstructs the itemDetails array
+      {
+        $project: {
+          _id: 0, // Exclude the default _id
+          branch: '$branch',
+          id: '$itemDetails._id',
+          name: '$itemDetails.name',
+          sku: '$itemDetails.sku',
+          category: '$itemDetails.category',
+          quantity: '$quantity', // Quantity from the transaction
+          assetNumber: '$assetNumber',
+          model: '$model',
+          serialNumber: '$serialNumber',
+          itemTrackingId: '$itemTrackingId',
+          reason: '$reason',
+        },
+      },
       {
         $group: {
-          _id: '$_id.branch',
+          _id: '$branch',
           items: {
             $push: {
-              id: '$itemDetails._id',
-              name: '$itemDetails.name',
-              sku: '$itemDetails.sku',
-              category: '$itemDetails.category',
-              quantity: '$netQuantity',
+              id: '$id',
+              name: '$name',
+              sku: '$sku',
+              category: '$category',
+              quantity: '$quantity',
+              assetNumber: '$assetNumber',
+              model: '$model',
+              serialNumber: '$serialNumber',
+              itemTrackingId: '$itemTrackingId',
+              reason: '$reason',
             },
           },
         },
@@ -187,6 +258,7 @@ const getAllTransferredItems = async (req, res) => {
 
 module.exports = {
   createTransaction,
+  transferItem,
   getTransactionsByItem,
   getBranches,
   getItemsByBranch,

@@ -197,16 +197,28 @@ export const useInventoryController = () => {
   // Create a new transaction
   const createTransaction = useCallback(async (transactionData: {
     itemId: string;
-    type: 'in' | 'out';
+    type: 'in' | 'out' | 'return' | 'transfer';
     quantity: number;
     branch?: string;
+    assetNumber?: string;
+    model?: string;
+    serialNumber?: string;
+    itemTrackingId?: string;
+    reason?: string;
   }) => {
     try {
-      const { item: updatedItem } = await api('/transactions', 'POST', transactionData); // POST /api/transactions
+      let response;
+      if (transactionData.type === 'transfer') {
+        response = await api('/transactions/transfer', 'POST', transactionData); // POST /api/transactions/transfer
+      } else {
+        response = await api('/transactions', 'POST', transactionData); // POST /api/transactions
+      }
+      
+      const { item: updatedItem } = response;
       setItems(prev => prev.map(item => (item.id === updatedItem.id ? updatedItem : item)));
       toast({
         title: 'Transaction successful',
-        description: `Stock for ${updatedItem.name} has been updated.`,
+        description: `${updatedItem.name} stock has been updated and transaction recorded.`,
       });
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();

@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['in', 'out', 'return'],
+      enum: ['in', 'out', 'return', 'transfer'],
     },
     quantity: {
       type: Number,
@@ -18,10 +18,28 @@ const transactionSchema = new mongoose.Schema(
     },
     branch: {
       type: String,
-      // Required for 'out' or 'return' transactions
+      // Required for 'out', 'return', or 'transfer' transactions
       required: function () {
-        return this.type === 'out' || this.type === 'return';
+        return this.type === 'out' || this.type === 'return' || this.type === 'transfer';
       },
+    },
+    assetNumber: {
+      type: String,
+    },
+    model: {
+      type: String,
+    },
+    serialNumber: {
+      type: String,
+    },
+    itemTrackingId: {
+      type: String,
+      required: function () {
+        return this.type === 'transfer';
+      },
+    },
+    reason: {
+      type: String,
     },
   },
   {

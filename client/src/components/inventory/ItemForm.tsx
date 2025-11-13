@@ -4,7 +4,6 @@ import { InventoryItem, Category } from "@/models/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,11 +27,8 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
     category: item?.category || '',
     quantity: item?.quantity || 0,
     minStock: item?.minStock || 0,
-    maxStock: item?.maxStock || 0,
-    price: item?.price || 0,
     supplier: item?.supplier || '',
     location: item?.location || '',
-    description: item?.description || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -102,7 +98,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Current Quantity *</Label>
+              <Label htmlFor="quantity">{item ? 'Current Quantity *' : 'Adding Quantity *'}</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -125,31 +121,6 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="maxStock">Maximum Stock *</Label>
-              <Input
-                id="maxStock"
-                type="number"
-                value={formData.maxStock}
-                onChange={(e) => handleChange('maxStock', parseInt(e.target.value) || 0)}
-                required
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="price">Price ($) *</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
-                required
-                min="0"
-              />
-            </div>
-
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="location">Storage Location *</Label>
               <Input
@@ -158,17 +129,6 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 onChange={(e) => handleChange('location', e.target.value)}
                 required
                 placeholder="e.g., Warehouse A, Shelf 12"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                placeholder="Optional description of the item"
-                rows={3}
               />
             </div>
           </div>

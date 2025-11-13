@@ -81,9 +81,7 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
                 <TableCell>{item.category}</TableCell>
                 <TableCell>
                   <span className="font-semibold">{item.quantity}</span>
-                  <span className="text-muted-foreground text-sm ml-1">/ {item.maxStock}</span>
-                </TableCell>
-                <TableCell>${item.price.toFixed(2)}</TableCell>
+                </TableCell>                <TableCell>${item.price.toFixed(2)}</TableCell>
                 <TableCell>{getStatusBadge(item.status)}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{item.location}</TableCell>
                 <TableCell className="text-right">

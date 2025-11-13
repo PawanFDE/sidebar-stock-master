@@ -17,7 +17,14 @@ import { ArrowLeftRight } from "lucide-react";
 
 interface TransferredItemGroup {
   branch: string;
-  items: (Pick<InventoryItem, 'id' | 'name' | 'sku' | 'category'> & { quantity: number })[];
+  items: (Pick<InventoryItem, 'id' | 'name' | 'sku' | 'category'> & { 
+    quantity: number;
+    assetNumber?: string;
+    model?: string;
+    serialNumber?: string;
+    itemTrackingId?: string;
+    reason?: string;
+  })[];
 }
 
 type SelectedReturnItem = (Pick<InventoryItem, 'id' | 'name'> & { quantity: number });
@@ -30,6 +37,11 @@ export default function TransferredItemsList() {
 
   const fetchItems = async () => {
     const items = await getTransferredItems();
+    // The aggregation pipeline in the backend returns netQuantity, 
+    // but for 'transfer' type, we want to show the original quantity and details.
+    // This might require further refinement in the backend aggregation or frontend processing
+    // to correctly display individual transferred item details.
+    // For now, we'll assume the backend provides the necessary details.
     setGroupedItems(items);
   };
 
@@ -89,6 +101,11 @@ export default function TransferredItemsList() {
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Quantity</TableHead>
+                        <TableHead>Item Tracking ID</TableHead>
+                        <TableHead>Asset Number</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>Serial Number</TableHead>
+                        <TableHead>Reason</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -101,6 +118,11 @@ export default function TransferredItemsList() {
                           <TableCell className="font-semibold">
                             {item.quantity}
                           </TableCell>
+                          <TableCell>{item.itemTrackingId || 'N/A'}</TableCell>
+                          <TableCell>{item.assetNumber || 'N/A'}</TableCell>
+                          <TableCell>{item.model || 'N/A'}</TableCell>
+                          <TableCell>{item.serialNumber || 'N/A'}</TableCell>
+                          <TableCell>{item.reason || 'N/A'}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="ghost"
