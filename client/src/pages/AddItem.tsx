@@ -10,8 +10,8 @@ export default function AddItem() {
   const navigate = useNavigate();
   const { categories, addItem } = useInventoryController();
 
-  const handleSubmit = (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
-    addItem(item);
+  const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
+    await addItem(item);
     navigate('/inventory');
   };
 

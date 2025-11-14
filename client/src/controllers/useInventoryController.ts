@@ -80,7 +80,6 @@ export const useInventoryController = () => {
     return {
       totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
       lowStockItems: items.filter(item => item.status === 'low-stock' || item.status === 'out-of-stock').length,
-      totalValue: items.reduce((sum, item) => sum + (item.quantity * item.price), 0),
       categories: categories.length,
     };
   }, [items, categories]);

@@ -60,7 +60,6 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Quantity</TableHead>
-            <TableHead>Price</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Location</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -81,7 +80,7 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
                 <TableCell>{item.category}</TableCell>
                 <TableCell>
                   <span className="font-semibold">{item.quantity}</span>
-                </TableCell>                <TableCell>${item.price.toFixed(2)}</TableCell>
+                </TableCell>
                 <TableCell>{getStatusBadge(item.status)}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{item.location}</TableCell>
                 <TableCell className="text-right">

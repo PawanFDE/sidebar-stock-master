@@ -29,10 +29,6 @@ const inventoryItemSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
-    price: {
-      type: Number,
-      default: 0,
-    },
     supplier: {
       type: String,
       required: true,

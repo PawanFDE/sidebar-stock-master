@@ -177,7 +177,6 @@ const getItemsByBranch = async (req, res) => {
           name: '$itemDetails.name',
           sku: '$itemDetails.sku',
           category: '$itemDetails.category',
-          price: '$itemDetails.price',
           location: '$itemDetails.location',
           supplier: '$itemDetails.supplier',
           quantity: '$quantity',

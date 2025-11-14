@@ -10,8 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { InventoryItem } from "@/models/inventory";
+import branchesData from "../../../public/fed_branches.json";
 
 interface TransactionFormProps {
   item: InventoryItem | null;
@@ -19,7 +26,7 @@ interface TransactionFormProps {
   onClose: () => void;
   onSubmit: (transactionData: {
     itemId: string;
-    type: 'in' | 'out' | 'transfer';
+    type: "in" | "out" | "transfer";
     quantity: number;
     branch?: string;
     assetNumber?: string;
@@ -30,15 +37,20 @@ interface TransactionFormProps {
   }) => void;
 }
 
-export function TransactionForm({ item, isOpen, onClose, onSubmit }: TransactionFormProps) {
-  const [type, setType] = useState<'in' | 'out' | 'transfer'>('out');
+export function TransactionForm({
+  item,
+  isOpen,
+  onClose,
+  onSubmit,
+}: TransactionFormProps) {
+  const [type, setType] = useState<"in" | "out" | "transfer">("transfer");
   const [quantity, setQuantity] = useState(1);
-  const [branch, setBranch] = useState('');
-  const [assetNumber, setAssetNumber] = useState('');
-  const [model, setModel] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [itemTrackingId, setItemTrackingId] = useState('');
-  const [reason, setReason] = useState('');
+  const [branch, setBranch] = useState("");
+  const [assetNumber, setAssetNumber] = useState("");
+  const [model, setModel] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [itemTrackingId, setItemTrackingId] = useState("");
+  const [reason, setReason] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,10 +60,10 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
       itemId: item.id,
       type,
       quantity,
-      branch: (type === 'out' || type === 'transfer') ? branch : undefined,
+      branch: type === "transfer" ? branch : undefined,
     };
 
-    if (type === 'transfer') {
+    if (type === "transfer") {
       onSubmit({
         ...baseData,
         assetNumber: assetNumber || undefined,
@@ -66,14 +78,14 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
   };
 
   const handleClose = () => {
-    setType('out');
+    setType("transfer");
     setQuantity(1);
-    setBranch('');
-    setAssetNumber('');
-    setModel('');
-    setSerialNumber('');
-    setItemTrackingId('');
-    setReason('');
+    setBranch("");
+    setAssetNumber("");
+    setModel("");
+    setSerialNumber("");
+    setItemTrackingId("");
+    setReason("");
     onClose();
   };
 
@@ -81,21 +93,30 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl p-4">
+      {/* WIDTH UPDATED HERE */}
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle>
-            {type === 'in' ? 'Add Stock (In)' : type === 'out' ? 'Transfer Stock (Out)' : 'Transfer Item'} for {item.name}
+            {type === "in"
+              ? "Add Stock (In)"
+              : "Transfer Item"}{" "}
+            for {item.name}
           </DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
-            <Select value={type} onValueChange={(value: 'in' | 'out' | 'transfer') => setType(value)}>
+            <Select
+              value={type}
+              onValueChange={(value: "in" | "out" | "transfer") =>
+                setType(value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="out">Transfer Out (Simple)</SelectItem>
                 <SelectItem value="transfer">Transfer (Detailed)</SelectItem>
                 <SelectItem value="in">Add Stock In</SelectItem>
               </SelectContent>
@@ -110,25 +131,33 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
               value={quantity}
               onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               min="1"
-              max={type === 'in' ? undefined : item.quantity}
+              max={type === "in" ? undefined : item.quantity}
               required
             />
           </div>
 
-          {(type === 'out' || type === 'transfer') && (
+          {type === "transfer" && (
             <div className="space-y-2">
               <Label htmlFor="branch">Branch</Label>
-              <Input
-                id="branch"
+              <Select
                 value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-                placeholder="e.g., Downtown Branch"
-                required
-              />
+                onValueChange={(value) => setBranch(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branchesData.fed_branches.map((branchName) => (
+                    <SelectItem key={branchName} value={branchName}>
+                      {branchName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
-          {type === 'transfer' && (
+          {type === "transfer" && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="itemTrackingId">Item Tracking ID</Label>
@@ -140,6 +169,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="assetNumber">Asset Number (Optional)</Label>
                 <Input
@@ -149,6 +179,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
                   placeholder="e.g., AN12345"
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="model">Model (Optional)</Label>
                 <Input
@@ -158,6 +189,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
                   placeholder="e.g., XYZ-Pro"
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="serialNumber">Serial Number (Optional)</Label>
                 <Input
@@ -167,6 +199,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
                   placeholder="e.g., SN98765"
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="reason">Reason (Optional)</Label>
                 <Input
@@ -184,7 +217,7 @@ export function TransactionForm({ item, isOpen, onClose, onSubmit }: Transaction
               Cancel
             </Button>
             <Button type="submit">
-              {type === 'in' ? 'Add Stock' : type === 'out' ? 'Transfer Out' : 'Transfer Item'}
+              {type === "in" ? "Add Stock" : "Transfer Item"}
             </Button>
           </DialogFooter>
         </form>

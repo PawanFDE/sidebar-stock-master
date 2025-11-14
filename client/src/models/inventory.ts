@@ -7,8 +7,7 @@ export interface InventoryItem {
   category: string;
   quantity: number;
   minStock: number;
-  maxStock: number;
-  price: number;
+  maxStock?: number;
   supplier: string;
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
@@ -25,7 +24,6 @@ export interface Category {
 export interface DashboardStats {
   totalItems: number;
   lowStockItems: number;
-  totalValue: number;
   categories: number;
 }
 

@@ -34,13 +34,6 @@ export default function Dashboard() {
           variant="warning"
         />
         <StatsCard
-          title="Total Value"
-          value={`$${stats.totalValue.toLocaleString()}`}
-          icon={DollarSign}
-          variant="success"
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatsCard
           title="Categories"
           value={stats.categories}
           icon={FolderOpen}
