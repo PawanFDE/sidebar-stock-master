@@ -23,7 +23,6 @@ interface ItemFormProps {
 export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps) {
   const [formData, setFormData] = useState({
     name: item?.name || '',
-    sku: item?.sku || '',
     category: item?.category || '',
     quantity: item?.quantity || 0,
     minStock: item?.minStock || 0,
@@ -56,17 +55,6 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 onChange={(e) => handleChange('name', e.target.value)}
                 required
                 placeholder="e.g., Laptop Dell XPS 15"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => handleChange('sku', e.target.value)}
-                required
-                placeholder="e.g., ELEC-001"
               />
             </div>
 

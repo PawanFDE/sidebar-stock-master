@@ -65,7 +65,6 @@ export const useInventoryController = () => {
     return items.filter((item) => {
       const matchesSearch = 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = 
@@ -219,8 +218,6 @@ export const useInventoryController = () => {
         title: 'Transaction successful',
         description: `${updatedItem.name} stock has been updated and transaction recorded.`,
       });
-      // Re-fetch all data to update categories and ensure data consistency
-      fetchItemsAndCategories();
     } catch (err: any) {
       setError(err.message);
       toast({

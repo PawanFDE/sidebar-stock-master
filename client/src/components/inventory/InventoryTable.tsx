@@ -56,7 +56,6 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-muted/50">
-            <TableHead>SKU</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Quantity</TableHead>
@@ -75,7 +74,6 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
           ) : (
             items.map((item) => (
               <TableRow key={item.id} className="hover:bg-muted/30">
-                <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.category}</TableCell>
                 <TableCell>

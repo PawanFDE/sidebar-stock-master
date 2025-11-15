@@ -55,7 +55,6 @@ export default function Dashboard() {
                   <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.sku}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">

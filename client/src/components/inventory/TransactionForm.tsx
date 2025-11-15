@@ -18,7 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { InventoryItem } from "@/models/inventory";
-import branchesData from "../../../public/fed_branches.json";
+import branchesData from "../../fed_branches.json";
 
 interface TransactionFormProps {
   item: InventoryItem | null;

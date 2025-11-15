@@ -32,12 +32,11 @@ const getInventoryItemById = async (req, res) => {
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, sku, category, quantity, minStock, maxStock, price, supplier, location, description } = req.body;
+  const { name, category, quantity, minStock, maxStock, price, supplier, location, description } = req.body;
 
   try {
     const item = new InventoryItem({
       name,
-      sku,
       category,
       quantity,
       minStock,
@@ -60,14 +59,13 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, sku, category, quantity, minStock, maxStock, price, supplier, location, description } = req.body;
+  const { name, category, quantity, minStock, maxStock, price, supplier, location, description } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
 
     if (item) {
       item.name = name || item.name;
-      item.sku = sku || item.sku;
       item.category = category || item.category;
       item.quantity = quantity !== undefined ? quantity : item.quantity;
       item.minStock = minStock !== undefined ? minStock : item.minStock;

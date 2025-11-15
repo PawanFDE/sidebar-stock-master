@@ -86,8 +86,6 @@ const transferItem = async (req, res) => {
 
     // Decrement quantity from current location
     item.quantity -= quantity;
-    // Update item's location
-    item.location = branch;
 
     // Determine item status based on stock levels
     if (item.quantity <= item.minStock && item.quantity > 0) {
@@ -175,7 +173,6 @@ const getItemsByBranch = async (req, res) => {
         $project: {
           _id: '$itemDetails._id',
           name: '$itemDetails.name',
-          sku: '$itemDetails.sku',
           category: '$itemDetails.category',
           location: '$itemDetails.location',
           supplier: '$itemDetails.supplier',
@@ -211,7 +208,6 @@ const getAllTransferredItems = async (req, res) => {
           branch: '$branch',
           id: '$itemDetails._id',
           name: '$itemDetails.name',
-          sku: '$itemDetails.sku',
           category: '$itemDetails.category',
           quantity: '$quantity', // Quantity from the transaction
           assetNumber: '$assetNumber',
@@ -228,7 +224,6 @@ const getAllTransferredItems = async (req, res) => {
             $push: {
               id: '$id',
               name: '$name',
-              sku: '$sku',
               category: '$category',
               quantity: '$quantity',
               assetNumber: '$assetNumber',

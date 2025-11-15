@@ -6,11 +6,7 @@ const inventoryItemSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    sku: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+
     category: {
       type: String,
       required: true,

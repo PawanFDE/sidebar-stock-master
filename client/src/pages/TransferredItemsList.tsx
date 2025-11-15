@@ -17,7 +17,7 @@ import { ArrowLeftRight } from "lucide-react";
 
 interface TransferredItemGroup {
   branch: string;
-  items: (Pick<InventoryItem, 'id' | 'name' | 'sku' | 'category'> & { 
+  items: (Pick<InventoryItem, 'id' | 'name' | 'category'> & { 
     quantity: number;
     assetNumber?: string;
     model?: string;
@@ -97,7 +97,6 @@ export default function TransferredItemsList() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>SKU</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Quantity</TableHead>
@@ -112,7 +111,6 @@ export default function TransferredItemsList() {
                     <TableBody>
                       {group.items.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-mono text-sm">{item.sku}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell>{item.category}</TableCell>
                           <TableCell className="font-semibold">
