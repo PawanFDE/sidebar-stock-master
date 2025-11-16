@@ -1,5 +1,5 @@
 // View - Transferred Items List Page
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ReturnForm } from "@/components/inventory/ReturnForm";
 import { InventoryItem } from "@/models/inventory";
 import { ArrowLeftRight } from "lucide-react";
@@ -37,6 +38,7 @@ export default function TransferredItemsList() {
   const [groupedItems, setGroupedItems] = useState<TransferredItemGroup[]>([]);
   const [returnItem, setReturnItem] = useState<SelectedReturnItem | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>(''); // State for search term
 
   const fetchItems = async () => {
     const items = await getTransferredItems();
@@ -74,25 +76,50 @@ export default function TransferredItemsList() {
     fetchItems(); // Re-fetch the items to update the list
   };
 
+  const filteredGroupedItems = useMemo(() => {
+    if (!searchTerm) {
+      return groupedItems;
+    }
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return groupedItems.filter(group => {
+      const branchMatch = group.branch.toLowerCase().includes(lowerCaseSearchTerm);
+      const itemMatch = group.items.some(item =>
+        (item.itemTrackingId && item.itemTrackingId.toLowerCase().includes(lowerCaseSearchTerm)) ||
+        (item.assetNumber && item.assetNumber.toLowerCase().includes(lowerCaseSearchTerm))
+      );
+      return branchMatch || itemMatch;
+    });
+  }, [groupedItems, searchTerm]);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Transferred Items</h1>
-        <p className="text-muted-foreground mt-1">
+      <p className="text-muted-foreground mt-1">
           Overview of all items transferred to different locations.
         </p>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <Input
+          type="text"
+          placeholder="Search by branch, item tracking ID, or asset number..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
       </div>
 
       {loading && groupedItems.length === 0 ? (
         <p>Loading...</p>
       ) : (
         <div className="space-y-8">
-          {groupedItems.length === 0 ? (
+          {filteredGroupedItems.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              No items have been transferred yet.
+              No items have been transferred yet or match your search.
             </p>
           ) : (
-            groupedItems.map((group) => (
+            filteredGroupedItems.map((group) => (
               <Card key={group.branch}>
                 <CardHeader>
                   <CardTitle className="text-xl">{group.branch}</CardTitle>

@@ -27,7 +27,9 @@ const inventoryItemSchema = mongoose.Schema(
     },
     supplier: {
       type: String,
-      required: true,
+    },
+    model: {
+      type: String,
     },
     location: {
       type: String,

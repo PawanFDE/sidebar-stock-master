@@ -60,14 +60,14 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
             <TableHead>Category</TableHead>
             <TableHead>Quantity</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Location</TableHead>
+            <TableHead>Model</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                 No items found. Add your first inventory item to get started.
               </TableCell>
             </TableRow>
@@ -80,7 +80,7 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction }: Inven
                   <span className="font-semibold">{item.quantity}</span>
                 </TableCell>
                 <TableCell>{getStatusBadge(item.status)}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{item.location}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{item.model || 'N/A'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button

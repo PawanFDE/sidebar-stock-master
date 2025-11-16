@@ -27,6 +27,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
     quantity: item?.quantity || 0,
     minStock: item?.minStock || 0,
     supplier: item?.supplier || '',
+    model: item?.model || '', // New field for Model
     location: item?.location || '',
   });
 
@@ -75,13 +76,22 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier *</Label>
+              <Label htmlFor="supplier">Supplier</Label>
               <Input
                 id="supplier"
                 value={formData.supplier}
                 onChange={(e) => handleChange('supplier', e.target.value)}
-                required
                 placeholder="e.g., Tech Distributors Inc."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="model">Model</Label>
+              <Input
+                id="model"
+                value={formData.model}
+                onChange={(e) => handleChange('model', e.target.value)}
+                placeholder="e.g., XPS 15"
               />
             </div>
 
@@ -94,6 +104,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 0)}
                 required
                 min="0"
+                disabled={!!item}
               />
             </div>
 
@@ -106,6 +117,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 onChange={(e) => handleChange('minStock', parseInt(e.target.value) || 0)}
                 required
                 min="0"
+                disabled={!!item}
               />
             </div>
 

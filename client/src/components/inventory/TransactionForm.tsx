@@ -1,5 +1,5 @@
 // View Component - In/Out Transaction Form
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,10 +47,16 @@ export function TransactionForm({
   const [quantity, setQuantity] = useState(1);
   const [branch, setBranch] = useState("");
   const [assetNumber, setAssetNumber] = useState("");
-  const [model, setModel] = useState("");
+  const [model, setModel] = useState(item?.model || ""); // Initialize with item.model
   const [serialNumber, setSerialNumber] = useState("");
   const [itemTrackingId, setItemTrackingId] = useState("");
   const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (item) {
+      setModel(item.model || "");
+    }
+  }, [item]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
