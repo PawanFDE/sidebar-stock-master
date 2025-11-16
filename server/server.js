@@ -22,6 +22,8 @@ app.get('/', (req, res) => {
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
+const userRoutes = require('./routes/user');
+app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

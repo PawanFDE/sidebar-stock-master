@@ -8,9 +8,24 @@ import { Badge } from "@/components/ui/badge";
 export default function Dashboard() {
   const { stats, allItems } = useInventoryController();
 
+  // Get user info from localStorage to check role
+  const userInfoString = localStorage.getItem('userInfo');
+  const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
+  const userRole = userInfo?.role;
+
   const lowStockItems = allItems.filter(
     item => item.status === 'low-stock' || item.status === 'out-of-stock'
   ).slice(0, 5);
+
+  if (userRole === 'subadmin') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-100px)]">
+        <h1 className="text-3xl font-bold text-foreground mb-4">Welcome, Sub-Admin!</h1>
+        <p className="text-muted-foreground">Your dashboard view is customized for your role.</p>
+        <p className="text-muted-foreground">Please use the navigation to access available features.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
