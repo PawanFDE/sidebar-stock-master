@@ -7,7 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { InventoryItem } from "@/models/inventory";
 
 interface ReturnFormProps {
-  item: (Pick<InventoryItem, 'id' | 'name'> & { quantity: number }) | null;
+  item: (Pick<InventoryItem, 'id' | 'name'> & { 
+    quantity: number;
+    itemTrackingId?: string;
+  }) | null;
   branch: string;
   isOpen: boolean;
   onClose: () => void;
@@ -16,6 +19,7 @@ interface ReturnFormProps {
     type: 'return';
     quantity: number;
     branch: string;
+    itemTrackingId?: string;
   }) => void;
 }
 
@@ -31,6 +35,7 @@ export function ReturnForm({ item, branch, isOpen, onClose, onSubmit }: ReturnFo
       type: 'return',
       quantity,
       branch,
+      itemTrackingId: item.itemTrackingId,
     });
   };
 

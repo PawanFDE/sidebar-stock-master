@@ -34,6 +34,7 @@ const transactionSchema = new mongoose.Schema(
     },
     itemTrackingId: {
       type: String,
+      // Required for 'transfer' transactions, optional for 'return'
       required: function () {
         return this.type === 'transfer';
       },

@@ -27,7 +27,10 @@ interface TransferredItemGroup {
   })[];
 }
 
-type SelectedReturnItem = (Pick<InventoryItem, 'id' | 'name'> & { quantity: number });
+type SelectedReturnItem = (Pick<InventoryItem, 'id' | 'name'> & { 
+  quantity: number;
+  itemTrackingId?: string;
+});
 
 export default function TransferredItemsList() {
   const { getTransferredItems, createTransaction, loading } = useInventoryController();
@@ -64,6 +67,7 @@ export default function TransferredItemsList() {
     type: 'return';
     quantity: number;
     branch: string;
+    itemTrackingId?: string;
   }) => {
     await createTransaction(transactionData);
     handleCloseReturnDialog();

@@ -5,7 +5,7 @@ const InventoryItem = require('../models/inventory');
 // @route   POST /api/transactions
 // @access  Public
 const createTransaction = async (req, res) => {
-  const { itemId, type, quantity, branch } = req.body;
+  const { itemId, type, quantity, branch, itemTrackingId } = req.body;
 
   if (!itemId || !type || !quantity) {
     return res.status(400).json({ message: 'Missing required fields' });
@@ -50,6 +50,7 @@ const createTransaction = async (req, res) => {
       type,
       quantity,
       branch,
+      itemTrackingId, // Include itemTrackingId if provided
     });
 
     const createdTransaction = await transaction.save();
@@ -192,28 +193,57 @@ const getItemsByBranch = async (req, res) => {
 const getAllTransferredItems = async (req, res) => {
   try {
     const transferredItems = await Transaction.aggregate([
-      { $match: { type: 'transfer' } }, // Only match 'transfer' type transactions
+      { $match: { type: { $in: ['transfer', 'return'] } } }, // Match both 'transfer' and 'return' transactions
+      {
+        $addFields: {
+          // Make return quantities negative for proper calculation
+          adjustedQuantity: {
+            $cond: {
+              if: { $eq: ['$type', 'return'] },
+              then: { $multiply: ['$quantity', -1] },
+              else: '$quantity'
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            branch: '$branch',
+            itemId: '$itemId',
+            itemTrackingId: '$itemTrackingId'
+          },
+          netQuantity: { $sum: '$adjustedQuantity' },
+          // Get the last transfer's details for display
+          assetNumber: { $last: '$assetNumber' },
+          model: { $last: '$model' },
+          serialNumber: { $last: '$serialNumber' },
+          reason: { $last: '$reason' },
+        },
+      },
+      // Filter out items with zero or negative net quantity
+      { $match: { netQuantity: { $gt: 0 } } },
       {
         $lookup: {
-          from: 'inventoryitems', // The collection name for InventoryItem model
-          localField: 'itemId',
+          from: 'inventoryitems',
+          localField: '_id.itemId',
           foreignField: '_id',
           as: 'itemDetails',
         },
       },
-      { $unwind: '$itemDetails' }, // Deconstructs the itemDetails array
+      { $unwind: '$itemDetails' },
       {
         $project: {
-          _id: 0, // Exclude the default _id
-          branch: '$branch',
+          _id: 0,
+          branch: '$_id.branch',
           id: '$itemDetails._id',
           name: '$itemDetails.name',
           category: '$itemDetails.category',
-          quantity: '$quantity', // Quantity from the transaction
+          quantity: '$netQuantity',
           assetNumber: '$assetNumber',
           model: '$model',
           serialNumber: '$serialNumber',
-          itemTrackingId: '$itemTrackingId',
+          itemTrackingId: '$_id.itemTrackingId',
           reason: '$reason',
         },
       },
