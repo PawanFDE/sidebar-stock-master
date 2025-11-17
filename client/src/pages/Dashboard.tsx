@@ -1,28 +1,65 @@
 // View - Dashboard Page
-import { Package, TrendingDown, DollarSign, FolderOpen } from "lucide-react";
 import { StatsCard } from "@/components/inventory/StatsCard";
-import { useInventoryController } from "@/controllers/useInventoryController";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useInventoryController } from "@/controllers/useInventoryController";
+import { FolderOpen, Package, TrendingDown, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const { stats, allItems } = useInventoryController();
+  const [subAdminCount, setSubAdminCount] = useState<number>(0);
 
   // Get user info from localStorage to check role
-  const userInfoString = localStorage.getItem('userInfo');
+  const userInfoString = localStorage.getItem("userInfo");
   const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
   const userRole = userInfo?.role;
 
-  const lowStockItems = allItems.filter(
-    item => item.status === 'low-stock' || item.status === 'out-of-stock'
-  ).slice(0, 5);
+  // Fetch sub-admin count for superadmin
+  useEffect(() => {
+    const fetchSubAdminCount = async () => {
+      if (userRole === "superadmin") {
+        try {
+          const token = userInfo?.token;
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/users/subadmin-count`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setSubAdminCount(data.count);
+          }
+        } catch (error) {
+          console.error("Error fetching sub-admin count:", error);
+        }
+      }
+    };
+    fetchSubAdminCount();
+  }, [userRole, userInfo?.token]);
 
-  if (userRole === 'subadmin') {
+  const lowStockItems = allItems
+    .filter(
+      (item) => item.status === "low-stock" || item.status === "out-of-stock"
+    )
+    .slice(0, 5);
+
+  if (userRole === "subadmin") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-100px)]">
-        <h1 className="text-3xl font-bold text-foreground mb-4">Welcome, Sub-Admin!</h1>
-        <p className="text-muted-foreground">Your dashboard view is customized for your role.</p>
-        <p className="text-muted-foreground">Please use the navigation to access available features.</p>
+        <h1 className="text-3xl font-bold text-foreground mb-4">
+          Welcome, Sub-Admin!
+        </h1>
+        <p className="text-muted-foreground">
+          Your dashboard view is customized for your role.
+        </p>
+        <p className="text-muted-foreground">
+          Please use the navigation to access available features.
+        </p>
       </div>
     );
   }
@@ -31,7 +68,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your inventory system</p>
+        <p className="text-muted-foreground mt-1">
+          Overview of your inventory system
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -54,6 +93,14 @@ export default function Dashboard() {
           icon={FolderOpen}
           variant="default"
         />
+        {userRole === "superadmin" && (
+          <StatsCard
+            title="Sub Admins"
+            value={subAdminCount}
+            icon={Users}
+            variant="info"
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -64,10 +111,15 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {lowStockItems.length === 0 ? (
-                <p className="text-muted-foreground text-sm">All items are well stocked!</p>
+                <p className="text-muted-foreground text-sm">
+                  All items are well stocked!
+                </p>
               ) : (
                 lowStockItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                  >
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.name}</p>
                     </div>
@@ -76,8 +128,14 @@ export default function Dashboard() {
                         <p className="text-sm font-semibold">{item.quantity}</p>
                         <p className="text-xs text-muted-foreground">units</p>
                       </div>
-                      <Badge variant={item.status === 'out-of-stock' ? 'destructive' : 'warning'}>
-                        {item.status === 'out-of-stock' ? 'Out' : 'Low'}
+                      <Badge
+                        variant={
+                          item.status === "out-of-stock"
+                            ? "destructive"
+                            : "warning"
+                        }
+                      >
+                        {item.status === "out-of-stock" ? "Out" : "Low"}
                       </Badge>
                     </div>
                   </div>
@@ -94,14 +152,20 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {allItems.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30"
+                >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <Package className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-sm">{item.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      Updated {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : 'N/A'}
+                      Updated{" "}
+                      {item.lastUpdated
+                        ? new Date(item.lastUpdated).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                 </div>

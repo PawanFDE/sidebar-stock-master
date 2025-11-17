@@ -1,10 +1,10 @@
-const User = require('../models/user');
-const jwt = require('jsonwebtoken');
+const User = require("../models/user");
+const jwt = require("jsonwebtoken");
 
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '1h', // Token expires in 1 hour
+    expiresIn: "1h", // Token expires in 1 hour
   });
 };
 
@@ -18,7 +18,7 @@ const registerUser = async (req, res) => {
     const userExists = await User.findOne({ username });
 
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const user = await User.create({
@@ -35,7 +35,7 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: 'Invalid user data' });
+      res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,7 +59,7 @@ const authUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(401).json({ message: 'Invalid username or password' });
+      res.status(401).json({ message: "Invalid username or password" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -73,21 +73,21 @@ const addSubAdmin = async (req, res) => {
   const { username, password } = req.body;
 
   // Check if the requesting user is a superadmin (this will be handled by middleware later)
-  if (req.user.role !== 'superadmin') {
-    return res.status(403).json({ message: 'Not authorized as an superadmin' });
+  if (req.user.role !== "superadmin") {
+    return res.status(403).json({ message: "Not authorized as an superadmin" });
   }
 
   try {
     const userExists = await User.findOne({ username });
 
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const subAdmin = await User.create({
       username,
       password,
-      role: 'subadmin', // Force role to subadmin
+      role: "subadmin", // Force role to subadmin
     });
 
     if (subAdmin) {
@@ -97,7 +97,7 @@ const addSubAdmin = async (req, res) => {
         role: subAdmin.role,
       });
     } else {
-      res.status(400).json({ message: 'Invalid sub-admin data' });
+      res.status(400).json({ message: "Invalid sub-admin data" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -109,7 +109,7 @@ const addSubAdmin = async (req, res) => {
 // @access  Private/Superadmin
 const getSubAdmins = async (req, res) => {
   try {
-    const subAdmins = await User.find({ role: 'subadmin' }).select('-password'); // Exclude password
+    const subAdmins = await User.find({ role: "subadmin" }).select("-password"); // Exclude password
     res.status(200).json(subAdmins);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -124,19 +124,37 @@ const deleteSubAdmin = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: 'Sub-admin not found' });
+      return res.status(404).json({ message: "Sub-admin not found" });
     }
 
-    if (user.role !== 'subadmin') {
-      return res.status(400).json({ message: 'Can only delete sub-admins' });
+    if (user.role !== "subadmin") {
+      return res.status(400).json({ message: "Can only delete sub-admins" });
     }
 
     await User.deleteOne({ _id: req.params.id });
-    res.status(200).json({ message: 'Sub-admin removed' });
+    res.status(200).json({ message: "Sub-admin removed" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// @desc    Get sub-admin count (only accessible by superadmin)
+// @route   GET /api/users/subadmin-count
+// @access  Private/Superadmin
+const getSubAdminCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments({ role: "subadmin" });
+    res.status(200).json({ count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-module.exports = { registerUser, authUser, addSubAdmin, getSubAdmins, deleteSubAdmin };
+module.exports = {
+  registerUser,
+  authUser,
+  addSubAdmin,
+  getSubAdmins,
+  deleteSubAdmin,
+  getSubAdminCount,
+};

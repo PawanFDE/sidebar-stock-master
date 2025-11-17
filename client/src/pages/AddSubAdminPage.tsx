@@ -97,13 +97,13 @@ export function AddSubAdminPage() {
 
   return (
     <div className="space-y-6">
-
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Sub‑Admin Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Create, review, and manage team access efficiently.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Sub‑Admin Management</h1>
+        <p className="text-muted-foreground mt-1">
+          Create, review, and manage team access efficiently.
+        </p>
+      </div>
+      <div>
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
             <Button className="inline-flex items-center gap-2">
