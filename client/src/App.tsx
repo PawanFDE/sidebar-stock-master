@@ -10,12 +10,14 @@ import LoginPage from "./pages/LoginPage";
 import { AddSubAdminPage } from "./pages/AddSubAdminPage";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import { MainLayout } from "@/components/MainLayout"; // Import MainLayout
+import { Toaster } from "@/components/ui/toaster";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
+      <Toaster />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<MainLayout />}>

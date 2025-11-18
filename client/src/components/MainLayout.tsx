@@ -8,7 +8,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export function MainLayout() {
   return (
     <TooltipProvider>
-      <Toaster />
       <Sonner />
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
