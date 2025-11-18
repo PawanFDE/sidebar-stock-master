@@ -3,6 +3,7 @@ import {
   useAddSubAdmin,
   useSubAdmins,
   useDeleteSubAdmin,
+  useChangeSubAdminPassword,
 } from "@/controllers/useAuth";
 
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusCircle, Trash2, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, KeyRound } from "lucide-react";
 
 export function AddSubAdminPage() {
   const [username, setUsername] = useState("");
@@ -44,9 +45,14 @@ export function AddSubAdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+
   const addSubAdminMutation = useAddSubAdmin();
   const { data: subAdmins, isLoading, isError, error } = useSubAdmins();
   const deleteSubAdminMutation = useDeleteSubAdmin();
+  const changePasswordMutation = useChangeSubAdminPassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +96,40 @@ export function AddSubAdminPage() {
         title: "Error",
         description:
           error.response?.data?.message || "Failed to delete sub‑admin.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openChangePasswordModal = (admin: any) => {
+    setSelectedAdmin(admin);
+    setIsChangePasswordModalOpen(true);
+  };
+
+  const handleSubmitPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) {
+      toast({
+        title: "Missing information",
+        description: "New password is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await changePasswordMutation.mutateAsync({ id: selectedAdmin._id, password: newPassword });
+      setNewPassword("");
+      setIsChangePasswordModalOpen(false);
+      toast({
+        title: "Success 🎉",
+        description: `Password for ${selectedAdmin.username} has been updated.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "Failed to change password.",
         variant: "destructive",
       });
     }
@@ -210,13 +250,19 @@ export function AddSubAdminPage() {
                         {admin.role || "Sub‑Admin"}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openChangePasswordModal(admin)}
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="destructive"
                             size="sm"
-                            className="absolute top-3 right-3"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -257,8 +303,49 @@ export function AddSubAdminPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
 
+      {/* Change Password Modal */}
+      <Dialog open={isChangePasswordModalOpen} onOpenChange={setIsChangePasswordModalOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              Change Password for {selectedAdmin?.username}
+            </DialogTitle>
+            <DialogDescription>
+              Enter a new password for the sub-admin account.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitPasswordChange} className="grid gap-5 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password" className="text-sm font-medium">
+                New Password
+              </Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2"
+              disabled={changePasswordMutation.isPending}
+            >
+              {changePasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-  
 }

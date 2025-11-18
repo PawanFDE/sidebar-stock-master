@@ -11,8 +11,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useInventoryController } from "@/controllers/useInventoryController";
 import { useLogout } from "@/controllers/useAuth"; // Import useLogout
+import { useInventoryController } from "@/controllers/useInventoryController";
 import {
   ArrowRightLeft,
   FolderOpen,
@@ -39,7 +39,7 @@ export function InventorySidebar() {
   const logout = useLogout(); // Initialize useLogout hook
 
   // Get user info from localStorage to check role
-  const userInfoString = localStorage.getItem('userInfo');
+  const userInfoString = localStorage.getItem("userInfo");
   const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
   const userRole = userInfo?.role;
 
@@ -77,7 +77,7 @@ export function InventorySidebar() {
                 </SidebarMenuItem>
               ))}
 
-              {userRole === 'superadmin' && (
+              {userRole === "superadmin" && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -95,12 +95,32 @@ export function InventorySidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Logout Button */}
-        <SidebarGroup className="mt-auto"> {/* Use mt-auto to push to bottom */}
+        {/* User Info + Logout */}
+        <SidebarGroup className="mt-auto px-3 pb-4">
           <SidebarGroupContent>
+            <div
+              className={`flex items-center gap-3 p-3 rounded-lg transition-all
+        ${open ? "bg-sidebar-accent/30" : "justify-center"}
+      `}
+            >
+              {open && (
+                <div className="flex flex-col">
+                  <p className="text-sm font-semibold text-sidebar-foreground">
+                    {userInfo?.username}
+                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {userInfo?.role}
+                  </p>
+                </div>
+              )}
+            </div>
+
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={logout}>
+                <SidebarMenuButton
+                  onClick={logout}
+                  className="hover:bg-red-500/15 hover:text-red-500 transition-colors"
+                >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
                 </SidebarMenuButton>

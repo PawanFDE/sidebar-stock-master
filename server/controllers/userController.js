@@ -150,6 +150,36 @@ const getSubAdminCount = async (req, res) => {
   }
 };
 
+// @desc    Change sub-admin password (only accessible by superadmin)
+// @route   PUT /api/users/subadmin/:id/change-password
+// @access  Private/Superadmin
+const changeSubAdminPassword = async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
+
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "Sub-admin not found" });
+    }
+
+    if (user.role !== "subadmin") {
+      return res.status(400).json({ message: "Can only change password for sub-admins" });
+    }
+
+    user.password = password;
+    await user.save();
+
+    res.status(200).json({ message: "Sub-admin password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   authUser,
@@ -157,4 +187,5 @@ module.exports = {
   getSubAdmins,
   deleteSubAdmin,
   getSubAdminCount,
+  changeSubAdminPassword,
 };

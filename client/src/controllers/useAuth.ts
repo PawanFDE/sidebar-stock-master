@@ -151,3 +151,35 @@ export const useDeleteSubAdmin = () => {
     },
   });
 };
+
+export const useChangeSubAdminPassword = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, password }: { id: string; password: string }) => {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      };
+      const response = await axios.put(`${API_URL}/subadmin/${id}/change-password`, { password }, config);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Password Updated',
+        description: "Sub-admin's password has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['subAdmins'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update Failed',
+        description: error.response?.data?.message || 'An error occurred while updating the password.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
