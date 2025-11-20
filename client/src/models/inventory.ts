@@ -8,7 +8,8 @@ export interface InventoryItem {
   minStock: number;
   maxStock?: number;
   supplier: string;
-  model?: string; // New optional field for model
+  model?: string;
+  serialNumber?: string;
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
   lastUpdated: Date;

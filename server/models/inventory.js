@@ -31,6 +31,9 @@ const inventoryItemSchema = mongoose.Schema(
     model: {
       type: String,
     },
+    serialNumber: {
+      type: String,
+    },
     location: {
       type: String,
       required: true,

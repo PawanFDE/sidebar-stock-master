@@ -30,6 +30,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
       - minStock: Minimum stock level (if mentioned, otherwise use 5 as default)
       - supplier: The supplier/vendor/company name (look at the top of the invoice)
       - model: Model number, SKU, or product code (if visible)
+      - serialNumber: Serial number(s), S/N, Serial No, or any alphanumeric codes that look like serial numbers (if multiple, separate with commas). Look carefully for any codes labeled as "Serial", "S/N", "Serial Number", or similar identifiers.
       - location: Storage location if mentioned (otherwise leave as empty string)
       - description: A brief description of the item (combine details from the invoice)
 
@@ -52,6 +53,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
         "minStock": 5,
         "supplier": "supplier name",
         "model": "model/sku",
+        "serialNumber": "SN123456, SN123457",
         "location": "",
         "description": "brief description"
       }
@@ -75,6 +77,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
     let extractedData;
     try {
       extractedData = JSON.parse(jsonString);
+      console.log("Extracted data from Gemini:", extractedData);
     } catch (parseError) {
       console.error("JSON Parse Error:", parseError);
       console.error("Raw response:", text);
@@ -87,6 +90,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
         minStock: 5,
         supplier: "",
         model: "",
+        serialNumber: "",
         location: "",
         description: "Failed to extract data from invoice"
       };
@@ -100,6 +104,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
       minStock: extractedData.minStock || 5,
       supplier: extractedData.supplier || "",
       model: extractedData.model || "",
+      serialNumber: extractedData.serialNumber || "",
       location: extractedData.location || "",
       description: extractedData.description || ""
     };

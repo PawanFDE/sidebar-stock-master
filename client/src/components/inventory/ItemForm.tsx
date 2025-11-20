@@ -32,6 +32,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
     minStock: item?.minStock || 0,
     supplier: item?.supplier || '',
     model: item?.model || '',
+    serialNumber: item?.serialNumber || '',
     location: item?.location || '',
   });
 
@@ -69,6 +70,9 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
         minStock: extractedData.minStock || prev.minStock,
         supplier: extractedData.supplier || prev.supplier,
         model: extractedData.model || prev.model,
+        serialNumber: extractedData.serialNumber 
+          ? (prev.serialNumber ? prev.serialNumber + ', ' + extractedData.serialNumber : extractedData.serialNumber)
+          : prev.serialNumber,
         location: extractedData.location || prev.location,
       }));
 
@@ -159,6 +163,16 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
                 value={formData.model}
                 onChange={(e) => handleChange('model', e.target.value)}
                 placeholder="e.g., XPS 15"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serialNumber">Serial Number(s)</Label>
+              <Input
+                id="serialNumber"
+                value={formData.serialNumber}
+                onChange={(e) => handleChange('serialNumber', e.target.value)}
+                placeholder="e.g., SN123456, SN123457 (comma separated)"
               />
             </div>
 
