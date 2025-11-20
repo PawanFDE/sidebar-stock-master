@@ -1,22 +1,22 @@
 // View - Inventory List Page
-import { useState } from "react";
-import { useInventoryController } from "@/controllers/useInventoryController";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ItemForm } from "@/components/inventory/ItemForm";
 import { TransactionForm } from "@/components/inventory/TransactionForm";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useInventoryController } from "@/controllers/useInventoryController";
 import { InventoryItem } from "@/models/inventory";
+import { Plus, Search } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function InventoryList() {
   const navigate = useNavigate();
@@ -34,6 +34,12 @@ export default function InventoryList() {
 
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [transactionItem, setTransactionItem] = useState<InventoryItem | null>(null);
+  const [transferSerial, setTransferSerial] = useState<string>("");
+  const [viewingItem, setViewingItem] = useState<InventoryItem | null>(null);
+
+  const handleView = (item: InventoryItem) => {
+    setViewingItem(item);
+  };
 
   const handleEdit = (item: InventoryItem) => {
     setEditingItem(item);
@@ -48,16 +54,23 @@ export default function InventoryList() {
 
   const handleTransaction = (item: InventoryItem) => {
     setTransactionItem(item);
+    setTransferSerial(""); // Reset serial when opening generic transaction
+  };
+
+  const handleTransferSerial = (item: InventoryItem, serial: string) => {
+    setTransactionItem(item);
+    setTransferSerial(serial);
   };
 
   const handleCreateTransaction = (transactionData: {
     itemId: string;
-    type: 'in' | 'out';
+    type: 'in' | 'out' | 'transfer';
     quantity: number;
     branch?: string;
   }) => {
     createTransaction(transactionData);
     setTransactionItem(null);
+    setTransferSerial("");
   };
 
   return (
@@ -103,7 +116,85 @@ export default function InventoryList() {
         onEdit={handleEdit}
         onDelete={deleteItem}
         onTransaction={handleTransaction}
+        onView={handleView}
+        onTransferSerial={handleTransferSerial}
       />
+
+      <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Item Details</DialogTitle>
+          </DialogHeader>
+          {viewingItem && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-base font-semibold">{viewingItem.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Category</p>
+                  <p className="text-base">{viewingItem.category}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Quantity</p>
+                  <p className="text-base font-semibold">{viewingItem.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Minimum Stock</p>
+                  <p className="text-base">{viewingItem.minStock}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Supplier</p>
+                  <p className="text-base">{viewingItem.supplier || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Model</p>
+                  <p className="text-base">{viewingItem.model || 'N/A'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Serial Number(s)</p>
+                  {viewingItem.serialNumber ? (
+                    <div className="space-y-1 mt-1">
+                      {viewingItem.serialNumber.split(',').map((serial, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                            {serial.trim()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-base">N/A</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Warranty</p>
+                  <p className="text-base">{viewingItem.warranty || 'N/A'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Location</p>
+                  <p className="text-base">{viewingItem.location}</p>
+                </div>
+                {viewingItem.description && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Description</p>
+                    <p className="text-base">{viewingItem.description}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => { setViewingItem(null); handleEdit(viewingItem); }} className="flex-1">
+                  Edit Item
+                </Button>
+                <Button variant="outline" onClick={() => setViewingItem(null)} className="flex-1">
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -125,6 +216,7 @@ export default function InventoryList() {
         item={transactionItem}
         isOpen={!!transactionItem}
         onClose={() => setTransactionItem(null)}
+        initialSerialNumber={transferSerial}
         onSubmit={handleCreateTransaction}
       />
     </div>

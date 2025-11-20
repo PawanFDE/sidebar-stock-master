@@ -1,30 +1,54 @@
 // View Component - Add/Edit Item Form
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Category, InventoryItem } from "@/models/inventory";
 import axios from "axios";
 import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { MultiItemSelector } from "./MultiItemSelector";
 
 interface ItemFormProps {
   item?: InventoryItem;
   categories: Category[];
   onSubmit: (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => void;
+  onSubmitMultiple?: (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => void;
   onCancel?: () => void;
 }
 
-export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps) {
+interface ExtractedItem {
+  name: string;
+  category: string;
+  quantity: number;
+  minStock: number;
+  supplier: string;
+  model?: string;
+  serialNumber?: string;
+  warranty?: string;
+  location: string;
+  description?: string;
+}
+
+export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCancel }: ItemFormProps) {
   const [uploading, setUploading] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
+  const [showItemSelector, setShowItemSelector] = useState(false);
   const [formData, setFormData] = useState({
     name: item?.name || '',
     category: item?.category || '',
@@ -33,6 +57,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
     supplier: item?.supplier || '',
     model: item?.model || '',
     serialNumber: item?.serialNumber || '',
+    warranty: item?.warranty || '',
     location: item?.location || '',
   });
 
@@ -60,23 +85,34 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
         },
       });
 
-      const extractedData = response.data;
+      const { items } = response.data;
       
-      setFormData(prev => ({
-        ...prev,
-        name: extractedData.name || prev.name,
-        category: extractedData.category || prev.category,
-        quantity: extractedData.quantity || prev.quantity,
-        minStock: extractedData.minStock || prev.minStock,
-        supplier: extractedData.supplier || prev.supplier,
-        model: extractedData.model || prev.model,
-        serialNumber: extractedData.serialNumber 
-          ? (prev.serialNumber ? prev.serialNumber + ', ' + extractedData.serialNumber : extractedData.serialNumber)
-          : prev.serialNumber,
-        location: extractedData.location || prev.location,
-      }));
-
-      toast.success("Invoice data extracted successfully!");
+      if (items && items.length > 0) {
+        if (items.length === 1) {
+          // Single item - auto-fill the form
+          const extractedData = items[0];
+          setFormData(prev => ({
+            ...prev,
+            name: extractedData.name || prev.name,
+            category: extractedData.category || prev.category,
+            quantity: extractedData.quantity || prev.quantity,
+            minStock: extractedData.minStock || prev.minStock,
+            supplier: extractedData.supplier || prev.supplier,
+            model: extractedData.model || prev.model,
+            serialNumber: extractedData.serialNumber 
+              ? (prev.serialNumber ? prev.serialNumber + ', ' + extractedData.serialNumber : extractedData.serialNumber)
+              : prev.serialNumber,
+            warranty: extractedData.warranty || prev.warranty,
+            location: extractedData.location || prev.location,
+          }));
+          toast.success("Invoice data extracted successfully!");
+        } else {
+          // Multiple items - show selector
+          setExtractedItems(items);
+          setShowItemSelector(true);
+          toast.success(`Found ${items.length} items in the invoice!`);
+        }
+      }
     } catch (error) {
       console.error("Error uploading invoice:", error);
       toast.error("Failed to extract data from invoice.");
@@ -87,8 +123,62 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
     }
   };
 
+  const handleAddSelectedItems = (selectedItems: ExtractedItem[]) => {
+    setShowItemSelector(false);
+    
+    if (selectedItems.length === 0) {
+      toast.info("No items selected");
+      return;
+    }
+
+    if (selectedItems.length === 1) {
+      // Single item - just fill the form
+      const item = selectedItems[0];
+      setFormData({
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        minStock: item.minStock,
+        supplier: item.supplier,
+        model: item.model || '',
+        serialNumber: item.serialNumber || '',
+        warranty: item.warranty || '',
+        location: item.location,
+      });
+      toast.success("Item data loaded! Review and click 'Add Item' to save.");
+    } else {
+      // Multiple items - use the onSubmitMultiple callback if available
+      if (onSubmitMultiple) {
+        toast.info(`Adding ${selectedItems.length} items to inventory...`);
+        onSubmitMultiple(selectedItems);
+      } else {
+        toast.error("Multiple item submission is not supported in this context");
+      }
+    }
+
+    // Clear extracted items
+    setExtractedItems([]);
+  };
+
   return (
-    <Card>
+    <>
+      <Dialog open={showItemSelector} onOpenChange={setShowItemSelector}>
+        <DialogContent className="max-w-5xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Select Items to Add</DialogTitle>
+            <DialogDescription>
+              Multiple items were found in the invoice. Select which ones you want to add to inventory.
+            </DialogDescription>
+          </DialogHeader>
+          <MultiItemSelector
+            items={extractedItems}
+            onAddSelected={handleAddSelectedItems}
+            onCancel={() => setShowItemSelector(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Card>
       <CardHeader>
         <CardTitle>{item ? 'Edit Item' : 'Add New Item'}</CardTitle>
       </CardHeader>
@@ -177,6 +267,16 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="warranty">Warranty Period</Label>
+              <Input
+                id="warranty"
+                value={formData.warranty}
+                onChange={(e) => handleChange('warranty', e.target.value)}
+                placeholder="e.g., 3 Years, 12 Months"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="quantity">{item ? 'Current Quantity *' : 'Adding Quantity *'}</Label>
               <Input
                 id="quantity"
@@ -226,6 +326,7 @@ export function ItemForm({ item, categories, onSubmit, onCancel }: ItemFormProps
           </div>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </>
   );
 }

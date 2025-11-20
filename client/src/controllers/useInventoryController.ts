@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { InventoryItem, Category, DashboardStats } from '../models/inventory';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useToast } from '../components/ui/use-toast'; // Assuming this is the correct path
+import { Category, DashboardStats, InventoryItem } from '../models/inventory';
 
 // Utility for API calls
 async function api(endpoint: string, method: string = 'GET', data?: any) {
@@ -126,16 +126,51 @@ export const useInventoryController = () => {
   }, [fetchItemsAndCategories]);
 
   // Delete item
-  const deleteItem = useCallback(async (id: string) => {
+  const deleteItem = useCallback(async (id: string, serialNumber?: string) => {
     try {
       const itemToDelete = items.find(i => i.id === id);
-      await api(`/inventory/${id}`, 'DELETE'); // DELETE /api/inventory/:id
-      setItems(prev => prev.filter(item => item.id !== id));
-      toast({
-        title: 'Item deleted',
-        description: `${itemToDelete?.name} has been removed from inventory.`,
-        variant: 'destructive',
-      });
+      if (!itemToDelete) return;
+
+      if (serialNumber) {
+        // Logic to remove specific serial
+        const currentSerials = itemToDelete.serialNumber ? itemToDelete.serialNumber.split(',').map(s => s.trim()) : [];
+        const newSerials = currentSerials.filter(s => s !== serialNumber);
+        
+        // Decrement quantity
+        const newQuantity = itemToDelete.quantity - 1;
+        
+        if (newQuantity <= 0) {
+            // If quantity hits 0 (or less), delete the item completely
+             await api(`/inventory/${id}`, 'DELETE');
+             setItems(prev => prev.filter(item => item.id !== id));
+             toast({
+               title: 'Item deleted',
+               description: `${itemToDelete.name} has been removed from inventory.`,
+               variant: 'destructive',
+             });
+        } else {
+            // Update item with removed serial and decremented quantity
+            const updates = {
+                quantity: newQuantity,
+                serialNumber: newSerials.join(', ')
+            };
+            
+            // We call updateItem here. Note: updateItem will trigger its own toast and state update.
+            // To avoid double toasts or state conflicts, we can call the API directly here or reuse updateItem.
+            // Reusing updateItem is safer for consistency.
+            await updateItem(id, updates);
+            return; 
+        }
+      } else {
+        // Original full delete
+        await api(`/inventory/${id}`, 'DELETE');
+        setItems(prev => prev.filter(item => item.id !== id));
+        toast({
+          title: 'Item deleted',
+          description: `${itemToDelete?.name} has been removed from inventory.`,
+          variant: 'destructive',
+        });
+      }
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
     } catch (err: any) {
@@ -146,7 +181,7 @@ export const useInventoryController = () => {
         variant: 'destructive',
       });
     }
-  }, [items, fetchItemsAndCategories]);
+  }, [items, fetchItemsAndCategories, updateItem]);
 
   // Add new category
   const addCategory = useCallback(async (categoryName: string) => {

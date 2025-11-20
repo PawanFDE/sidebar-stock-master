@@ -34,6 +34,9 @@ const inventoryItemSchema = mongoose.Schema(
     serialNumber: {
       type: String,
     },
+    warranty: {
+      type: String,
+    },
     location: {
       type: String,
       required: true,

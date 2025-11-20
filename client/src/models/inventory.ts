@@ -10,6 +10,7 @@ export interface InventoryItem {
   supplier: string;
   model?: string;
   serialNumber?: string;
+  warranty?: string;
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
   lastUpdated: Date;

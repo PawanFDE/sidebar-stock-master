@@ -1,10 +1,10 @@
 // View - Add Item Page
-import { useNavigate } from "react-router-dom";
-import { useInventoryController } from "@/controllers/useInventoryController";
 import { ItemForm } from "@/components/inventory/ItemForm";
-import { InventoryItem } from "@/models/inventory";
 import { Button } from "@/components/ui/button";
+import { useInventoryController } from "@/controllers/useInventoryController";
+import { InventoryItem } from "@/models/inventory";
 import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function AddItem() {
   const navigate = useNavigate();
@@ -12,6 +12,15 @@ export default function AddItem() {
 
   const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
     await addItem(item);
+    navigate('/inventory');
+  };
+
+  const handleSubmitMultiple = async (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => {
+    // Add all items without navigating
+    for (const item of items) {
+      await addItem(item);
+    }
+    // Navigate only after all items are added
     navigate('/inventory');
   };
 
@@ -30,6 +39,7 @@ export default function AddItem() {
       <ItemForm
         categories={categories}
         onSubmit={handleSubmit}
+        onSubmitMultiple={handleSubmitMultiple}
         onCancel={() => navigate('/inventory')}
       />
     </div>

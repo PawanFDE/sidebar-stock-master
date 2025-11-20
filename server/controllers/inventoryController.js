@@ -34,7 +34,7 @@ const getInventoryItemById = async (req, res) => {
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, category, quantity, minStock, maxStock, price, supplier, model, location, description } = req.body;
+  const { name, category, quantity, minStock, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
     const item = new InventoryItem({
@@ -46,6 +46,8 @@ const createInventoryItem = async (req, res) => {
       price,
       supplier,
       model,
+      serialNumber,
+      warranty,
       location,
       status: quantity <= minStock ? (quantity === 0 ? 'out-of-stock' : 'low-stock') : 'in-stock',
       description,
@@ -54,6 +56,7 @@ const createInventoryItem = async (req, res) => {
     const createdItem = await item.save();
     res.status(201).json(createdItem);
   } catch (error) {
+    console.error("Error creating inventory item:", error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -62,7 +65,7 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, category, quantity, minStock, maxStock, price, supplier, model, location, description } = req.body;
+  const { name, category, quantity, minStock, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
@@ -76,6 +79,8 @@ const updateInventoryItem = async (req, res) => {
       item.price = price !== undefined ? price : item.price;
       item.supplier = supplier || item.supplier;
       item.model = model || item.model;
+      item.serialNumber = serialNumber || item.serialNumber;
+      item.warranty = warranty || item.warranty;
       item.location = location || item.location;
       item.description = description || item.description;
 
@@ -147,17 +152,22 @@ const uploadInvoice = async (req, res) => {
     const categories = await Category.find({});
     const categoryNames = categories.map(c => c.name).join(', ');
 
-    const extractedData = await extractInvoiceData(
+    const extractedDataArray = await extractInvoiceData(
       req.file.buffer, 
       req.file.mimetype,
       categoryNames
     );
 
-    // Match the extracted category with available categories
-    const matchedCategory = findClosestCategory(extractedData.category, categories);
-    extractedData.category = matchedCategory;
+    // Match the extracted category with available categories for each item
+    const processedItems = extractedDataArray.map(item => {
+      const matchedCategory = findClosestCategory(item.category, categories);
+      return {
+        ...item,
+        category: matchedCategory
+      };
+    });
 
-    res.status(200).json(extractedData);
+    res.status(200).json({ items: processedItems });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to process invoice' });

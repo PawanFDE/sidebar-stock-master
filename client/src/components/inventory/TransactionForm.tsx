@@ -1,29 +1,30 @@
 // View Component - In/Out Transaction Form
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { InventoryItem } from "@/models/inventory";
+import { useEffect, useState } from "react";
 import branchesData from "../../fed_branches.json";
 
 interface TransactionFormProps {
   item: InventoryItem | null;
   isOpen: boolean;
   onClose: () => void;
+  initialSerialNumber?: string;
   onSubmit: (transactionData: {
     itemId: string;
     type: "in" | "out" | "transfer";
@@ -41,6 +42,7 @@ export function TransactionForm({
   item,
   isOpen,
   onClose,
+  initialSerialNumber,
   onSubmit,
 }: TransactionFormProps) {
   const [type, setType] = useState<"in" | "out" | "transfer">("transfer");
@@ -48,7 +50,7 @@ export function TransactionForm({
   const [branch, setBranch] = useState("");
   const [assetNumber, setAssetNumber] = useState("");
   const [model, setModel] = useState(item?.model || ""); // Initialize with item.model
-  const [serialNumber, setSerialNumber] = useState("");
+  const [serialNumber, setSerialNumber] = useState(initialSerialNumber || "");
   const [itemTrackingId, setItemTrackingId] = useState("");
   const [reason, setReason] = useState("");
 
@@ -56,7 +58,13 @@ export function TransactionForm({
     if (item) {
       setModel(item.model || "");
     }
-  }, [item]);
+    if (initialSerialNumber) {
+      setSerialNumber(initialSerialNumber);
+      // If a specific serial number is provided, we likely want to transfer just that 1 item
+      setQuantity(1);
+      setType("transfer");
+    }
+  }, [item, initialSerialNumber, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
