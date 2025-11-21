@@ -28,11 +28,7 @@ export function StatsCard({ title, value, icon: Icon, trend, variant = 'default'
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
             <p className="text-3xl font-bold text-foreground">{value}</p>
-            {trend && (
-              <p className={`text-sm mt-2 ${trend.isPositive ? 'text-success' : 'text-destructive'}`}>
-                {trend.isPositive ? '+' : ''}{trend.value}% from last month
-              </p>
-            )}
+            
           </div>
           <div className={`p-3 rounded-lg ${variantClasses[variant]}`}>
             <Icon className="h-6 w-6" />
