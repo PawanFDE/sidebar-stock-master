@@ -1,20 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
@@ -87,7 +87,8 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       for (const newSerial of serials) {
         const duplicateItem = existingItems.find(existing => {
           // Skip the current item if we are editing
-          if (item && existing.id === item.id) return false;
+          // Check both id and _id to be safe against inconsistencies
+          if (item && (existing.id === item.id || (existing as any)._id === item.id || existing.id === (item as any)._id)) return false;
           
           if (!existing.serialNumber) return false;
           
@@ -96,7 +97,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         });
 
         if (duplicateItem) {
-          error = `Serial number '${newSerial}' already exists in item '${duplicateItem.name}'`;
+          error = `Serial number '${newSerial}' already exists in another item: '${duplicateItem.name}'`;
           break;
         }
       }
@@ -119,7 +120,8 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       for (const newSerial of serialNumbers) {
         const duplicateItem = existingItems.find(existing => {
           // Skip the current item if we are editing
-          if (item && existing.id === item.id) return false;
+          // Check both id and _id to be safe against inconsistencies
+          if (item && (existing.id === item.id || (existing as any)._id === item.id || existing.id === (item as any)._id)) return false;
           
           if (!existing.serialNumber) return false;
           
@@ -128,7 +130,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         });
 
         if (duplicateItem) {
-          toast.error(`Serial number '${newSerial}' already exists in item '${duplicateItem.name}'`);
+          toast.error(`Serial number '${newSerial}' already exists in another item: '${duplicateItem.name}'`);
           return; // Stop submission
         }
       }
@@ -364,7 +366,6 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
                 onChange={(e) => handleChange('serialNumber', e.target.value)}
                 placeholder="Enter each serial number on a new line or separated by commas."
                 className={`min-h-[100px] ${duplicateError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                disabled={!!item}
               />
               {duplicateError && (
                 <p className="text-sm font-medium text-destructive mt-1">
@@ -395,8 +396,8 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
                 onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 0)}
                 required
                 min="0"
-                // Disable quantity if in multi-mode or if editing an existing item
-                disabled={isMultiMode || !!item}
+                // Disable quantity if in multi-mode
+                disabled={isMultiMode}
               />
             </div>
 

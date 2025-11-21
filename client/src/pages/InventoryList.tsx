@@ -22,6 +22,7 @@ export default function InventoryList() {
   const navigate = useNavigate();
   const {
     items,
+    allItems,
     categories,
     searchTerm,
     setSearchTerm,
@@ -45,10 +46,15 @@ export default function InventoryList() {
     setEditingItem(item);
   };
 
-  const handleUpdate = (updates: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
+  const handleUpdate = async (updates: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
     if (editingItem) {
-      updateItem(editingItem.id, updates);
-      setEditingItem(null);
+      try {
+        await updateItem(editingItem.id, updates);
+        setEditingItem(null);
+      } catch (error) {
+        // Error is handled by controller toast, but we keep dialog open
+        console.error("Failed to update item:", error);
+      }
     }
   };
 
@@ -207,7 +213,7 @@ export default function InventoryList() {
             <ItemForm
               item={editingItem}
               categories={categories}
-              existingItems={items}
+              existingItems={allItems}
               onSubmit={handleUpdate}
               onCancel={() => setEditingItem(null)}
             />

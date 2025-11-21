@@ -145,14 +145,14 @@ const updateInventoryItem = async (req, res) => {
          }
       }
 
-      item.name = name || item.name;
-      item.category = category || item.category;
+      item.name = name !== undefined ? name : item.name;
+      item.category = category !== undefined ? category : item.category;
       item.quantity = quantity !== undefined ? quantity : item.quantity;
       item.maxStock = maxStock !== undefined ? maxStock : item.maxStock;
       item.price = price !== undefined ? price : item.price;
-      item.supplier = supplier || item.supplier;
-      item.model = model || item.model;
-      item.serialNumber = serialNumber || item.serialNumber;
+      item.supplier = supplier !== undefined ? supplier : item.supplier;
+      item.model = model !== undefined ? model : item.model;
+      item.serialNumber = serialNumber !== undefined ? serialNumber : item.serialNumber;
       
       if (warranty !== undefined) {
         item.warranty = warranty;
@@ -160,8 +160,8 @@ const updateInventoryItem = async (req, res) => {
         item.warrantyExpiryDate = calculateWarrantyExpiry(warranty, item.createdAt);
       }
       
-      item.location = location || item.location;
-      item.description = description || item.description;
+      item.location = location !== undefined ? location : item.location;
+      item.description = description !== undefined ? description : item.description;
 
       item.status = item.quantity === 0 ? 'out-of-stock' : 'in-stock';
 

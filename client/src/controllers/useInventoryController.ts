@@ -115,6 +115,7 @@ export const useInventoryController = () => {
       });
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
+      return newItem;
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -122,6 +123,7 @@ export const useInventoryController = () => {
         description: err.message,
         variant: 'destructive',
       });
+      throw err; // Re-throw to let caller know it failed
     }
   }, [fetchItemsAndCategories]);
 
@@ -136,6 +138,7 @@ export const useInventoryController = () => {
       });
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
+      return updatedItem;
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -143,6 +146,7 @@ export const useInventoryController = () => {
         description: err.message,
         variant: 'destructive',
       });
+      throw err; // Re-throw to let caller know it failed
     }
   }, [fetchItemsAndCategories]);
 

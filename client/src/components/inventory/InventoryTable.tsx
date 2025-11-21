@@ -318,7 +318,11 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(item)}
+                        onClick={() => {
+                          // Find the original item to ensure we edit the full data (all serials), not just the split row
+                          const originalItem = items.find(i => i.id === item.id);
+                          if (originalItem) onEdit(originalItem);
+                        }}
                         className="hover:bg-primary/10 hover:text-primary"
                       >
                         <Pencil className="h-4 w-4" />
