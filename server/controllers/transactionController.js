@@ -16,7 +16,34 @@ const createTransaction = async (req, res) => {
   }
 
   try {
-    const item = await InventoryItem.findById(itemId);
+    let item = await InventoryItem.findById(itemId);
+
+    // For 'return' transactions, if item doesn't exist (was deleted after transfer), recreate it
+    if (!item && type === 'return') {
+      // Find the original transfer transaction to get item details
+      const transferTransaction = await Transaction.findOne({ 
+        itemId, 
+        type: 'transfer',
+        itemTrackingId 
+      }).sort({ createdAt: -1 });
+
+      if (!transferTransaction) {
+        return res.status(404).json({ message: 'Original transfer transaction not found' });
+      }
+
+      // Recreate the item in inventory
+      item = new InventoryItem({
+        _id: itemId,
+        name: transferTransaction.itemName,
+        category: transferTransaction.itemCategory,
+        quantity: 0, // Will be updated below
+        location: 'Main Inventory', // Default location for returned items
+        supplier: '',
+        model: transferTransaction.model || '',
+        serialNumber: transferTransaction.serialNumber || '',
+        status: 'in-stock',
+      });
+    }
 
     if (!item) {
       return res.status(404).json({ message: 'Inventory item not found' });
@@ -33,18 +60,29 @@ const createTransaction = async (req, res) => {
       item.quantity += quantity;
     }
     
-    // Determine item status based on stock levels
-    if (item.quantity === 0) {
-      item.status = 'out-of-stock';
-    } else {
-      item.status = 'in-stock';
-    }
+    let updatedItem;
+    let itemDeleted = false;
 
-    const updatedItem = await item.save();
+    // If quantity reaches 0 after 'out' transaction, delete the item
+    if (type === 'out' && item.quantity === 0) {
+      await item.deleteOne();
+      itemDeleted = true;
+      updatedItem = { ...item.toObject(), quantity: 0, status: 'out-of-stock' };
+    } else {
+      // Determine item status based on stock levels
+      if (item.quantity === 0) {
+        item.status = 'out-of-stock';
+      } else {
+        item.status = 'in-stock';
+      }
+      updatedItem = await item.save();
+    }
 
     // Create the transaction
     const transaction = new Transaction({
       itemId,
+      itemName: item.name,
+      itemCategory: item.category,
       type,
       quantity,
       branch,
@@ -56,6 +94,7 @@ const createTransaction = async (req, res) => {
     res.status(201).json({
       transaction: createdTransaction,
       item: updatedItem,
+      itemDeleted, // Flag to indicate if item was deleted
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -86,18 +125,26 @@ const transferItem = async (req, res) => {
     // Decrement quantity from current location
     item.quantity -= quantity;
 
-    // Determine item status based on stock levels
-    if (item.quantity === 0) {
-      item.status = 'out-of-stock';
-    } else {
-      item.status = 'in-stock';
-    }
+    let updatedItem;
+    let itemDeleted = false;
 
-    const updatedItem = await item.save();
+    // If quantity reaches 0, delete the item from inventory
+    if (item.quantity === 0) {
+      await item.deleteOne();
+      itemDeleted = true;
+      // Keep a reference to the item for the response
+      updatedItem = { ...item.toObject(), quantity: 0, status: 'transferred' };
+    } else {
+      // Otherwise, update the item status
+      item.status = 'in-stock';
+      updatedItem = await item.save();
+    }
 
     // Create the transfer transaction
     const transaction = new Transaction({
       itemId,
+      itemName: item.name,
+      itemCategory: item.category,
       type: 'transfer',
       quantity,
       branch,
@@ -113,6 +160,7 @@ const transferItem = async (req, res) => {
     res.status(201).json({
       transaction: createdTransaction,
       item: updatedItem,
+      itemDeleted, // Flag to indicate if item was deleted
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -215,6 +263,9 @@ const getAllTransferredItems = async (req, res) => {
           model: { $last: '$model' },
           serialNumber: { $last: '$serialNumber' },
           reason: { $last: '$reason' },
+          // Store original item info from transaction in case item is deleted
+          itemName: { $last: '$itemName' },
+          itemCategory: { $last: '$itemCategory' },
         },
       },
       // Filter out items with zero or negative net quantity
@@ -227,14 +278,16 @@ const getAllTransferredItems = async (req, res) => {
           as: 'itemDetails',
         },
       },
-      { $unwind: '$itemDetails' },
+      // Use preserveNullAndEmptyArrays to keep items even if inventory item is deleted
+      { $unwind: { path: '$itemDetails', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 0,
           branch: '$_id.branch',
-          id: '$itemDetails._id',
-          name: '$itemDetails.name',
-          category: '$itemDetails.category',
+          id: '$_id.itemId',
+          // Use itemDetails if available, otherwise use stored transaction data
+          name: { $ifNull: ['$itemDetails.name', '$itemName'] },
+          category: { $ifNull: ['$itemDetails.category', '$itemCategory'] },
           quantity: '$netQuantity',
           assetNumber: '$assetNumber',
           model: '$model',

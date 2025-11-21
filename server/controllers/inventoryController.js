@@ -101,24 +101,82 @@ const createInventoryItem = async (req, res) => {
 
     const warrantyExpiryDate = calculateWarrantyExpiry(warranty);
 
-    const item = new InventoryItem({
-      name,
-      category,
-      quantity,
-      maxStock,
-      price,
-      supplier,
-      model,
-      serialNumber,
-      warranty,
-      warrantyExpiryDate,
-      location,
-      status: quantity === 0 ? 'out-of-stock' : 'in-stock',
-      description,
-    });
+    // Check if serial numbers are provided
+    if (serialNumber && serialNumber.trim()) {
+      // Split serial numbers by comma and create separate items
+      const serialNumbers = serialNumber.split(',').map(s => s.trim()).filter(s => s);
+      
+      if (serialNumbers.length > 1) {
+        // Create separate items for each serial number
+        const createdItems = [];
+        
+        for (const sn of serialNumbers) {
+          const item = new InventoryItem({
+            name,
+            category,
+            quantity: 1, // Each item with unique serial number has quantity 1
+            maxStock,
+            price,
+            supplier,
+            model,
+            serialNumber: sn,
+            warranty,
+            warrantyExpiryDate,
+            location,
+            status: 'in-stock',
+            description,
+          });
+          
+          const createdItem = await item.save();
+          createdItems.push(createdItem);
+        }
+        
+        return res.status(201).json({ 
+          message: `${createdItems.length} items created successfully`,
+          items: createdItems 
+        });
+      } else {
+        // Single serial number - create one item with quantity 1
+        const item = new InventoryItem({
+          name,
+          category,
+          quantity: 1,
+          maxStock,
+          price,
+          supplier,
+          model,
+          serialNumber: serialNumbers[0],
+          warranty,
+          warrantyExpiryDate,
+          location,
+          status: 'in-stock',
+          description,
+        });
 
-    const createdItem = await item.save();
-    res.status(201).json(createdItem);
+        const createdItem = await item.save();
+        return res.status(201).json(createdItem);
+      }
+    } else {
+      // No serial number provided - create item with specified quantity
+      const item = new InventoryItem({
+        name,
+        category,
+        quantity,
+        maxStock,
+        price,
+        supplier,
+        model,
+        serialNumber: '',
+        warranty,
+        warrantyExpiryDate,
+        location,
+        status: quantity === 0 ? 'out-of-stock' : 'in-stock',
+        description,
+      });
+
+      const createdItem = await item.save();
+      return res.status(201).json(createdItem);
+    }
   } catch (error) {
     console.error("Error creating inventory item:", error);
     res.status(400).json({ message: error.message });

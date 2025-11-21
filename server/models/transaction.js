@@ -7,6 +7,12 @@ const transactionSchema = new mongoose.Schema(
       ref: 'InventoryItem',
       required: true,
     },
+    itemName: {
+      type: String,
+    },
+    itemCategory: {
+      type: String,
+    },
     type: {
       type: String,
       required: true,

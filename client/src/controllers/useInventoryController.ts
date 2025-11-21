@@ -275,12 +275,26 @@ export const useInventoryController = () => {
         response = await api('/transactions', 'POST', transactionData); // POST /api/transactions
       }
       
-      const { item: updatedItem } = response;
-      setItems(prev => prev.map(item => (item.id === updatedItem.id ? updatedItem : item)));
-      toast({
-        title: 'Transaction successful',
-        description: `${updatedItem.name} stock has been updated and transaction recorded.`,
-      });
+      const { item: updatedItem, itemDeleted } = response;
+      
+      // If item was deleted (quantity reached 0), remove it from state
+      if (itemDeleted) {
+        setItems(prev => prev.filter(item => item.id !== updatedItem.id));
+        toast({
+          title: 'Transaction successful',
+          description: `Item has been transferred and removed from inventory.`,
+        });
+      } else {
+        // Otherwise, update the item in state
+        setItems(prev => prev.map(item => (item.id === updatedItem.id ? updatedItem : item)));
+        toast({
+          title: 'Transaction successful',
+          description: `${updatedItem.name} stock has been updated and transaction recorded.`,
+        });
+      }
+      
+      // Refetch to ensure consistency
+      fetchItemsAndCategories();
     } catch (err: any) {
       setError(err.message);
       toast({
