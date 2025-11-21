@@ -34,9 +34,7 @@ const createTransaction = async (req, res) => {
     }
     
     // Determine item status based on stock levels
-    if (item.quantity <= item.minStock && item.quantity > 0) {
-      item.status = 'low-stock';
-    } else if (item.quantity === 0) {
+    if (item.quantity === 0) {
       item.status = 'out-of-stock';
     } else {
       item.status = 'in-stock';
@@ -89,9 +87,7 @@ const transferItem = async (req, res) => {
     item.quantity -= quantity;
 
     // Determine item status based on stock levels
-    if (item.quantity <= item.minStock && item.quantity > 0) {
-      item.status = 'low-stock';
-    } else if (item.quantity === 0) {
+    if (item.quantity === 0) {
       item.status = 'out-of-stock';
     } else {
       item.status = 'in-stock';

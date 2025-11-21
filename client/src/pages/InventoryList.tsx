@@ -141,10 +141,6 @@ export default function InventoryList() {
                   <p className="text-base font-semibold">{viewingItem.quantity}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Minimum Stock</p>
-                  <p className="text-base">{viewingItem.minStock}</p>
-                </div>
-                <div>
                   <p className="text-sm font-medium text-muted-foreground">Supplier</p>
                   <p className="text-base">{viewingItem.supplier || 'N/A'}</p>
                 </div>

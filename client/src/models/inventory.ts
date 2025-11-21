@@ -5,7 +5,6 @@ export interface InventoryItem {
   name: string;
   category: string;
   quantity: number;
-  minStock: number;
   maxStock?: number;
   supplier: string;
   model?: string;
@@ -31,8 +30,7 @@ export interface DashboardStats {
 
 export type StockStatus = 'in-stock' | 'low-stock' | 'out-of-stock';
 
-export const getStockStatus = (quantity: number, minStock: number): StockStatus => {
+export const getStockStatus = (quantity: number): StockStatus => {
   if (quantity === 0) return 'out-of-stock';
-  if (quantity <= minStock) return 'low-stock';
   return 'in-stock';
 };

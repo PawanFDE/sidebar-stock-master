@@ -34,14 +34,13 @@ const getInventoryItemById = async (req, res) => {
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, category, quantity, minStock, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
     const item = new InventoryItem({
       name,
       category,
       quantity,
-      minStock,
       maxStock,
       price,
       supplier,
@@ -49,7 +48,7 @@ const createInventoryItem = async (req, res) => {
       serialNumber,
       warranty,
       location,
-      status: quantity <= minStock ? (quantity === 0 ? 'out-of-stock' : 'low-stock') : 'in-stock',
+      status: quantity === 0 ? 'out-of-stock' : 'in-stock',
       description,
     });
 
@@ -65,7 +64,7 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, category, quantity, minStock, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
@@ -74,7 +73,6 @@ const updateInventoryItem = async (req, res) => {
       item.name = name || item.name;
       item.category = category || item.category;
       item.quantity = quantity !== undefined ? quantity : item.quantity;
-      item.minStock = minStock !== undefined ? minStock : item.minStock;
       item.maxStock = maxStock !== undefined ? maxStock : item.maxStock;
       item.price = price !== undefined ? price : item.price;
       item.supplier = supplier || item.supplier;
@@ -84,7 +82,7 @@ const updateInventoryItem = async (req, res) => {
       item.location = location || item.location;
       item.description = description || item.description;
 
-      item.status = item.quantity <= item.minStock ? (item.quantity === 0 ? 'out-of-stock' : 'low-stock') : 'in-stock';
+      item.status = item.quantity === 0 ? 'out-of-stock' : 'in-stock';
 
       const updatedItem = await item.save();
       res.json(updatedItem);

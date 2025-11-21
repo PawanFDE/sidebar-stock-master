@@ -94,7 +94,40 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {lowStockItems.length === 0 ? (
+              {/* Category Alerts */}
+              {Object.entries(allItems.reduce((acc, item) => {
+                const cat = item.category || 'Uncategorized';
+                acc[cat] = (acc[cat] || 0) + item.quantity;
+                return acc;
+              }, {} as Record<string, number>))
+              .filter(([_, total]) => total <= 3)
+              .map(([category, total]) => (
+                <div
+                  key={`cat-${category}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-destructive/10 border border-destructive/20"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4 text-destructive" />
+                      <p className="font-medium text-sm text-destructive">Category: {category}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Critical category stock level</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-destructive">{total}</p>
+                      <p className="text-xs text-destructive/80">total units</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Item Alerts */}
+              {lowStockItems.length === 0 && Object.entries(allItems.reduce((acc, item) => {
+                  const cat = item.category || 'Uncategorized';
+                  acc[cat] = (acc[cat] || 0) + item.quantity;
+                  return acc;
+                }, {} as Record<string, number>)).filter(([_, total]) => total <= 3).length === 0 ? (
                 <p className="text-muted-foreground text-sm">
                   All items are well stocked!
                 </p>
@@ -106,6 +139,7 @@ export default function Dashboard() {
                   >
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">Category: {item.category}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">

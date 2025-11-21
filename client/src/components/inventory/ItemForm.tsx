@@ -1,26 +1,27 @@
-// View Component - Add/Edit Item Form
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
 import axios from "axios";
 import { Loader2, Upload } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { MultiItemSelector } from "./MultiItemSelector";
 
@@ -36,7 +37,6 @@ interface ExtractedItem {
   name: string;
   category: string;
   quantity: number;
-  minStock: number;
   supplier: string;
   model?: string;
   serialNumber?: string;
@@ -53,7 +53,6 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
     name: item?.name || '',
     category: item?.category || '',
     quantity: item?.quantity || 0,
-    minStock: item?.minStock || 0,
     supplier: item?.supplier || '',
     model: item?.model || '',
     serialNumber: item?.serialNumber || '',
@@ -61,19 +60,52 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
     location: item?.location || '',
   });
 
+  const [isMultiMode, setIsMultiMode] = useState(false);
+
+  // Effect to detect multiple serial numbers
+  useEffect(() => {
+    const serials = formData.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    const multi = serials.length > 1;
+    setIsMultiMode(multi);
+    if (multi) {
+      handleChange('quantity', serials.length);
+    }
+  }, [formData.serialNumber]);
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Trim and filter serial numbers
+    const serialNumbers = formData.serialNumber
+      .split(/[\n,]/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    // Check if we are in multiple item mode and the callback is available
+    if (serialNumbers.length > 1 && onSubmitMultiple) {
+      const itemsToCreate = serialNumbers.map(sn => ({
+        ...formData,
+        serialNumber: sn,
+        quantity: 1, // Each item with a serial number has a quantity of 1
+      }));
+      onSubmitMultiple(itemsToCreate);
+    } else {
+      // Standard single item submission
+      onSubmit({
+        ...formData,
+        // Ensure quantity is at least 1 if not in multi-mode
+        quantity: formData.quantity > 0 ? formData.quantity : 1,
+        serialNumber: serialNumbers.join(', '), // Consolidate back to a string
+      });
+    }
   };
 
   const handleChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     const formDataToSend = new FormData();
     formDataToSend.append('invoice', file);
 
@@ -96,7 +128,6 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
             name: extractedData.name || prev.name,
             category: extractedData.category || prev.category,
             quantity: extractedData.quantity || prev.quantity,
-            minStock: extractedData.minStock || prev.minStock,
             supplier: extractedData.supplier || prev.supplier,
             model: extractedData.model || prev.model,
             serialNumber: extractedData.serialNumber 
@@ -118,10 +149,33 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
       toast.error("Failed to extract data from invoice.");
     } finally {
       setUploading(false);
-      // Reset file input
-      e.target.value = '';
     }
   };
+
+  const handleFileDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      processFile(file);
+    }
+  }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    // Reset file input
+    e.target.value = '';
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: handleFileDrop,
+    accept: {
+      'image/*': [],
+      'application/pdf': []
+    },
+    multiple: false,
+    disabled: uploading,
+  });
 
   const handleAddSelectedItems = (selectedItems: ExtractedItem[]) => {
     setShowItemSelector(false);
@@ -138,7 +192,6 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
         name: item.name,
         category: item.category,
         quantity: item.quantity,
-        minStock: item.minStock,
         supplier: item.supplier,
         model: item.model || '',
         serialNumber: item.serialNumber || '',
@@ -163,7 +216,7 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
   return (
     <>
       <Dialog open={showItemSelector} onOpenChange={setShowItemSelector}>
-        <DialogContent className="max-w-5xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Select Items to Add</DialogTitle>
             <DialogDescription>
@@ -183,28 +236,22 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
         <CardTitle>{item ? 'Edit Item' : 'Add New Item'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-6 p-4 border border-dashed rounded-lg bg-muted/50">
-          <Label htmlFor="invoice-upload" className="cursor-pointer flex flex-col items-center gap-2">
-            {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            ) : (
-              <Upload className="h-8 w-8 text-muted-foreground" />
-            )}
-            <span className="text-sm font-medium">
-              {uploading ? "Processing Invoice..." : "Upload Invoice to Auto-fill"}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Supports Images and PDFs
-            </span>
-            <Input
-              id="invoice-upload"
-              type="file"
-              accept="image/*,application/pdf"
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-          </Label>
+        <div 
+          {...getRootProps()} 
+          className={`mb-6 p-4 border-2 border-dashed rounded-lg bg-muted/50 cursor-pointer flex flex-col items-center gap-2 transition-colors ${isDragActive ? 'border-primary' : ''}`}
+        >
+          <input {...getInputProps()} id="invoice-upload" />
+          {uploading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          ) : (
+            <Upload className="h-8 w-8 text-muted-foreground" />
+          )}
+          <span className="text-sm font-medium text-center">
+            {uploading ? "Processing Invoice..." : (isDragActive ? "Drop the invoice here" : "Drag & drop an invoice here, or click to select a file")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Supports Images and PDFs
+          </span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -256,14 +303,19 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="serialNumber">Serial Number(s)</Label>
-              <Input
+              <Textarea
                 id="serialNumber"
                 value={formData.serialNumber}
                 onChange={(e) => handleChange('serialNumber', e.target.value)}
-                placeholder="e.g., SN123456, SN123457 (comma separated)"
+                placeholder="Enter each serial number on a new line or separated by commas."
+                className="min-h-[100px]"
+                disabled={!!item}
               />
+              <p className="text-xs text-muted-foreground">
+                For multiple items, list each serial number. The quantity will be automatically calculated.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -285,22 +337,11 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
                 onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 0)}
                 required
                 min="0"
-                disabled={!!item}
+                // Disable quantity if in multi-mode or if editing an existing item
+                disabled={isMultiMode || !!item}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="minStock">Minimum Stock *</Label>
-              <Input
-                id="minStock"
-                type="number"
-                value={formData.minStock}
-                onChange={(e) => handleChange('minStock', parseInt(e.target.value) || 0)}
-                required
-                min="0"
-                disabled={!!item}
-              />
-            </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="location">Storage Location *</Label>

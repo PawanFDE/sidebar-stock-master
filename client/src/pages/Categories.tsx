@@ -1,22 +1,22 @@
 // View - Categories Page
-import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input"; // Import Input component
 import { useInventoryController } from "@/controllers/useInventoryController";
 import { FolderOpen, Trash2 } from "lucide-react";
-import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
 
 export default function Categories() {
   const { categories, allItems, addCategory, deleteCategory } = useInventoryController();
@@ -101,7 +101,10 @@ export default function Categories() {
                     {category.name}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{category.itemCount} items</Badge>
+                    <Badge variant={category.itemCount <= 3 ? "destructive" : "secondary"}>
+                      {category.itemCount} items
+                      {category.itemCount <= 3 && " (Low)"}
+                    </Badge>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon">

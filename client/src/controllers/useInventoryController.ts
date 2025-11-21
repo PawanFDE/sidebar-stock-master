@@ -76,9 +76,19 @@ export const useInventoryController = () => {
 
   // Dashboard statistics
   const stats: DashboardStats = useMemo(() => {
+    const lowStockItemsCount = items.filter(item => item.status === 'low-stock' || item.status === 'out-of-stock').length;
+    
+    const categoryTotals = items.reduce((acc, item) => {
+        const cat = item.category || 'Uncategorized';
+        acc[cat] = (acc[cat] || 0) + item.quantity;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    const lowStockCategoriesCount = Object.values(categoryTotals).filter(total => total <= 3).length;
+
     return {
       totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
-      lowStockItems: items.filter(item => item.status === 'low-stock' || item.status === 'out-of-stock').length,
+      lowStockItems: lowStockItemsCount + lowStockCategoriesCount,
       categories: categories.length,
     };
   }, [items, categories]);
@@ -126,18 +136,21 @@ export const useInventoryController = () => {
   }, [fetchItemsAndCategories]);
 
   // Delete item
-  const deleteItem = useCallback(async (id: string, serialNumber?: string) => {
+  const deleteItem = useCallback(async (id: string, serialNumber?: string | string[]) => {
     try {
       const itemToDelete = items.find(i => i.id === id);
       if (!itemToDelete) return;
 
       if (serialNumber) {
+        const serialsToRemove = Array.isArray(serialNumber) ? serialNumber : [serialNumber];
+        
         // Logic to remove specific serial
         const currentSerials = itemToDelete.serialNumber ? itemToDelete.serialNumber.split(',').map(s => s.trim()) : [];
-        const newSerials = currentSerials.filter(s => s !== serialNumber);
+        const newSerials = currentSerials.filter(s => !serialsToRemove.includes(s));
         
         // Decrement quantity
-        const newQuantity = itemToDelete.quantity - 1;
+        const quantityToRemove = serialsToRemove.length;
+        const newQuantity = itemToDelete.quantity - quantityToRemove;
         
         if (newQuantity <= 0) {
             // If quantity hits 0 (or less), delete the item completely
