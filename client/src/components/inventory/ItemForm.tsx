@@ -28,6 +28,7 @@ import { MultiItemSelector } from "./MultiItemSelector";
 interface ItemFormProps {
   item?: InventoryItem;
   categories: Category[];
+  existingItems?: InventoryItem[];
   onSubmit: (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => void;
   onSubmitMultiple?: (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => void;
   onCancel?: () => void;
@@ -45,7 +46,7 @@ interface ExtractedItem {
   description?: string;
 }
 
-export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCancel }: ItemFormProps) {
+export function ItemForm({ item, categories, existingItems = [], onSubmit, onSubmitMultiple, onCancel }: ItemFormProps) {
   const [uploading, setUploading] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [showItemSelector, setShowItemSelector] = useState(false);
@@ -62,15 +63,46 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
 
   const [isMultiMode, setIsMultiMode] = useState(false);
 
-  // Effect to detect multiple serial numbers
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+
+  // Effect to detect multiple serial numbers and check for duplicates
   useEffect(() => {
     const serials = formData.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
     const multi = serials.length > 1;
     setIsMultiMode(multi);
+    
+    // Update quantity if in multi-mode
     if (multi) {
-      handleChange('quantity', serials.length);
+       setFormData(prev => {
+           if (prev.quantity !== serials.length) {
+               return { ...prev, quantity: serials.length };
+           }
+           return prev;
+       });
     }
-  }, [formData.serialNumber]);
+
+    // Real-time duplicate check
+    let error = null;
+    if (existingItems.length > 0 && serials.length > 0) {
+      for (const newSerial of serials) {
+        const duplicateItem = existingItems.find(existing => {
+          // Skip the current item if we are editing
+          if (item && existing.id === item.id) return false;
+          
+          if (!existing.serialNumber) return false;
+          
+          const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
+          return existingSerials.includes(newSerial);
+        });
+
+        if (duplicateItem) {
+          error = `Serial number '${newSerial}' already exists in item '${duplicateItem.name}'`;
+          break;
+        }
+      }
+    }
+    setDuplicateError(error);
+  }, [formData.serialNumber, existingItems, item]);
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -81,6 +113,26 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
       .split(/[\n,]/)
       .map(s => s.trim())
       .filter(Boolean);
+
+    // Check for duplicate serial numbers
+    if (existingItems.length > 0 && serialNumbers.length > 0) {
+      for (const newSerial of serialNumbers) {
+        const duplicateItem = existingItems.find(existing => {
+          // Skip the current item if we are editing
+          if (item && existing.id === item.id) return false;
+          
+          if (!existing.serialNumber) return false;
+          
+          const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
+          return existingSerials.includes(newSerial);
+        });
+
+        if (duplicateItem) {
+          toast.error(`Serial number '${newSerial}' already exists in item '${duplicateItem.name}'`);
+          return; // Stop submission
+        }
+      }
+    }
 
     // Check if we are in multiple item mode and the callback is available
     if (serialNumbers.length > 1 && onSubmitMultiple) {
@@ -225,6 +277,7 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
           </DialogHeader>
           <MultiItemSelector
             items={extractedItems}
+            existingItems={existingItems}
             onAddSelected={handleAddSelectedItems}
             onCancel={() => setShowItemSelector(false)}
           />
@@ -310,9 +363,14 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
                 value={formData.serialNumber}
                 onChange={(e) => handleChange('serialNumber', e.target.value)}
                 placeholder="Enter each serial number on a new line or separated by commas."
-                className="min-h-[100px]"
+                className={`min-h-[100px] ${duplicateError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                 disabled={!!item}
               />
+              {duplicateError && (
+                <p className="text-sm font-medium text-destructive mt-1">
+                  {duplicateError}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
                 For multiple items, list each serial number. The quantity will be automatically calculated.
               </p>
@@ -356,7 +414,7 @@ export function ItemForm({ item, categories, onSubmit, onSubmitMultiple, onCance
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1" disabled={!!duplicateError}>
               {item ? 'Update Item' : 'Add Item'}
             </Button>
             {onCancel && (

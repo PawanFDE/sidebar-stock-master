@@ -1,4 +1,3 @@
-// Component to display and select multiple items extracted from invoice
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, ChevronDown, ChevronUp, Package, XCircle } from "lucide-react";
-import { useState } from "react";
+import { InventoryItem } from "@/models/inventory";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Package, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 
 interface ExtractedItem {
   name: string;
@@ -24,16 +24,44 @@ interface ExtractedItem {
 
 interface MultiItemSelectorProps {
   items: ExtractedItem[];
+  existingItems?: InventoryItem[];
   onAddSelected: (selectedItems: ExtractedItem[]) => void;
   onCancel: () => void;
 }
 
-export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemSelectorProps) {
+export function MultiItemSelector({ items, existingItems = [], onAddSelected, onCancel }: MultiItemSelectorProps) {
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
     new Set(items.map((_, index) => index)) // All items selected by default
   );
   const [editedItems, setEditedItems] = useState<ExtractedItem[]>([...items]);
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(new Set());
+
+  // Check for duplicates for each item
+  const duplicateErrors = useMemo(() => {
+    const errors = new Map<number, string>();
+    
+    editedItems.forEach((item, index) => {
+      if (!item.serialNumber) return;
+      
+      const serials = item.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+      if (serials.length === 0) return;
+
+      for (const newSerial of serials) {
+        const duplicateItem = existingItems.find(existing => {
+           if (!existing.serialNumber) return false;
+           const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
+           return existingSerials.includes(newSerial);
+        });
+
+        if (duplicateItem) {
+          errors.set(index, `Serial '${newSerial}' exists in '${duplicateItem.name}'`);
+          break; // Stop at first error for this item
+        }
+      }
+    });
+    return errors;
+  }, [editedItems, existingItems]);
+
 
   const toggleItem = (index: number) => {
     const newSelected = new Set(selectedIndices);
@@ -82,6 +110,9 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
     onAddSelected(selectedItems);
   };
 
+  // Check if any SELECTED item has an error
+  const hasSelectedErrors = Array.from(selectedIndices).some(index => duplicateErrors.has(index));
+
   return (
     <div className="w-full">
       <div className="mb-3">
@@ -119,14 +150,17 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
             {editedItems.map((item, index) => {
               const isExpanded = expandedIndices.has(index);
               const isSelected = selectedIndices.has(index);
+              const error = duplicateErrors.get(index);
 
               return (
                 <Card
                   key={index}
                   className={`transition-all ${
-                    isSelected
-                      ? 'border-primary bg-primary/5'
-                      : 'border-muted'
+                    error 
+                      ? 'border-destructive bg-destructive/5' 
+                      : isSelected
+                        ? 'border-primary bg-primary/5'
+                        : 'border-muted'
                   }`}
                 >
                   <CardContent className="p-4">
@@ -141,7 +175,15 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
                       <div className="flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-base">{item.name || 'Unnamed Item'}</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-base">{item.name || 'Unnamed Item'}</h4>
+                                {error && (
+                                    <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Duplicate Serial
+                                    </Badge>
+                                )}
+                            </div>
                             <div className="flex gap-2 mt-1 flex-wrap">
                               {item.category && (
                                 <Badge variant="secondary" className="text-xs">
@@ -152,6 +194,11 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
                                 Qty: <span className="font-medium">{item.quantity}</span>
                               </span>
                             </div>
+                            {error && (
+                                <p className="text-xs text-destructive font-medium mt-1">
+                                    {error}
+                                </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             {isSelected ? (
@@ -255,8 +302,11 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
                               value={item.serialNumber || ''}
                               onChange={(e) => handleFieldChange(index, 'serialNumber', e.target.value)}
                               placeholder="Enter serial numbers (one per line or comma-separated)"
-                              className="min-h-[60px] text-sm"
+                              className={`min-h-[60px] text-sm ${error ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                             />
+                            {error && (
+                                <p className="text-xs text-destructive mt-1">{error}</p>
+                            )}
                           </div>
 
                           <div className="space-y-2 md:col-span-2">
@@ -295,10 +345,10 @@ export function MultiItemSelector({ items, onAddSelected, onCancel }: MultiItemS
         <div className="flex gap-3 pt-3 border-t mt-3">
           <Button
             onClick={handleAddSelected}
-            disabled={selectedIndices.size === 0}
+            disabled={selectedIndices.size === 0 || hasSelectedErrors}
             className="flex-1"
           >
-            Add {selectedIndices.size} Item{selectedIndices.size !== 1 ? 's' : ''} to Inventory
+            {hasSelectedErrors ? 'Fix Duplicate Serials to Continue' : `Add ${selectedIndices.size} Item${selectedIndices.size !== 1 ? 's' : ''} to Inventory`}
           </Button>
           <Button variant="outline" onClick={onCancel}>
             Cancel

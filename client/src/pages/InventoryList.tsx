@@ -207,6 +207,7 @@ export default function InventoryList() {
             <ItemForm
               item={editingItem}
               categories={categories}
+              existingItems={items}
               onSubmit={handleUpdate}
               onCancel={() => setEditingItem(null)}
             />

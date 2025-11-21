@@ -27,6 +27,35 @@ function calculateWarrantyExpiry(warrantyStr, startDate = new Date()) {
   return expiryDate;
 }
 
+// Helper to check for duplicate serial numbers
+async function checkDuplicateSerialNumbers(serialNumber, excludeItemId = null) {
+  if (!serialNumber) return null;
+
+  const newSerials = serialNumber.split(',').map(s => s.trim()).filter(s => s);
+  if (newSerials.length === 0) return null;
+
+  // Find all items that have a serial number
+  const query = { serialNumber: { $exists: true, $ne: '' } };
+  if (excludeItemId) {
+    query._id = { $ne: excludeItemId };
+  }
+
+  const existingItems = await InventoryItem.find(query).select('serialNumber name');
+
+  for (const item of existingItems) {
+    if (!item.serialNumber) continue;
+    const existingSerials = item.serialNumber.split(',').map(s => s.trim());
+    
+    for (const newSerial of newSerials) {
+      if (existingSerials.includes(newSerial)) {
+        return { serial: newSerial, existingItemName: item.name };
+      }
+    }
+  }
+
+  return null;
+}
+
 // @desc    Get all inventory items
 // @route   GET /api/inventory
 // @access  Public
@@ -62,6 +91,14 @@ const createInventoryItem = async (req, res) => {
   const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
+    // Check for duplicate serial numbers
+    const duplicate = await checkDuplicateSerialNumbers(serialNumber);
+    if (duplicate) {
+      return res.status(400).json({ 
+        message: `Serial number '${duplicate.serial}' already exists in item '${duplicate.existingItemName}'.` 
+      });
+    }
+
     const warrantyExpiryDate = calculateWarrantyExpiry(warranty);
 
     const item = new InventoryItem({
@@ -98,6 +135,16 @@ const updateInventoryItem = async (req, res) => {
     const item = await InventoryItem.findById(req.params.id);
 
     if (item) {
+      // Check for duplicate serial numbers, excluding current item
+      if (serialNumber !== undefined) {
+         const duplicate = await checkDuplicateSerialNumbers(serialNumber, req.params.id);
+         if (duplicate) {
+           return res.status(400).json({ 
+             message: `Serial number '${duplicate.serial}' already exists in item '${duplicate.existingItemName}'.` 
+           });
+         }
+      }
+
       item.name = name || item.name;
       item.category = category || item.category;
       item.quantity = quantity !== undefined ? quantity : item.quantity;

@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function AddItem() {
   const navigate = useNavigate();
-  const { categories, addItem } = useInventoryController();
+  const { categories, items, addItem } = useInventoryController();
 
   const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
     await addItem(item);
@@ -38,6 +38,7 @@ export default function AddItem() {
 
       <ItemForm
         categories={categories}
+        existingItems={items}
         onSubmit={handleSubmit}
         onSubmitMultiple={handleSubmitMultiple}
         onCancel={() => navigate('/inventory')}
