@@ -2,6 +2,31 @@ const InventoryItem = require('../models/inventory');
 const Category = require('../models/category');
 const { extractInvoiceData } = require('../utils/gemini');
 
+// Helper to calculate warranty expiry
+function calculateWarrantyExpiry(warrantyStr, startDate = new Date()) {
+  if (!warrantyStr) return null;
+  
+  const match = warrantyStr.match(/(\d+)\s*(year|month|day|week)s?/i);
+  if (!match) return null;
+
+  const amount = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  
+  const expiryDate = new Date(startDate);
+  
+  if (unit.startsWith('year')) {
+    expiryDate.setFullYear(expiryDate.getFullYear() + amount);
+  } else if (unit.startsWith('month')) {
+    expiryDate.setMonth(expiryDate.getMonth() + amount);
+  } else if (unit.startsWith('week')) {
+    expiryDate.setDate(expiryDate.getDate() + amount * 7);
+  } else if (unit.startsWith('day')) {
+    expiryDate.setDate(expiryDate.getDate() + amount);
+  }
+  
+  return expiryDate;
+}
+
 // @desc    Get all inventory items
 // @route   GET /api/inventory
 // @access  Public
@@ -37,6 +62,8 @@ const createInventoryItem = async (req, res) => {
   const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
 
   try {
+    const warrantyExpiryDate = calculateWarrantyExpiry(warranty);
+
     const item = new InventoryItem({
       name,
       category,
@@ -47,6 +74,7 @@ const createInventoryItem = async (req, res) => {
       model,
       serialNumber,
       warranty,
+      warrantyExpiryDate,
       location,
       status: quantity === 0 ? 'out-of-stock' : 'in-stock',
       description,
@@ -78,7 +106,13 @@ const updateInventoryItem = async (req, res) => {
       item.supplier = supplier || item.supplier;
       item.model = model || item.model;
       item.serialNumber = serialNumber || item.serialNumber;
-      item.warranty = warranty || item.warranty;
+      
+      if (warranty !== undefined) {
+        item.warranty = warranty;
+        // Recalculate expiry if warranty changes. Base it on original creation date to be consistent with "purchase date" concept
+        item.warrantyExpiryDate = calculateWarrantyExpiry(warranty, item.createdAt);
+      }
+      
       item.location = location || item.location;
       item.description = description || item.description;
 

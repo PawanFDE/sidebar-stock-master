@@ -32,6 +32,9 @@ const inventoryItemSchema = mongoose.Schema(
     warranty: {
       type: String,
     },
+    warrantyExpiryDate: {
+      type: Date,
+    },
     location: {
       type: String,
       required: true,

@@ -167,6 +167,11 @@ export default function InventoryList() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Warranty</p>
                   <p className="text-base">{viewingItem.warranty || 'N/A'}</p>
+                  {viewingItem.warrantyExpiryDate && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Expires: {new Date(viewingItem.warrantyExpiryDate).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Location</p>
