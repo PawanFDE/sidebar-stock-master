@@ -40,9 +40,10 @@ interface InventoryTableProps {
   onTransaction: (item: InventoryItem) => void;
   onView: (item: InventoryItem) => void;
   onTransferSerial?: (item: InventoryItem, serialNumber: string) => void;
+  searchTerm?: string;
 }
 
-export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView, onTransferSerial }: InventoryTableProps) {
+export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView, onTransferSerial, searchTerm = "" }: InventoryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const itemsPerPage = 10;
@@ -77,6 +78,30 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
     }
     // Return original item if no serials
     return [{ ...item, displayId: item.id, isSplit: false }];
+  }).filter(item => {
+      // If no search term, show all
+      if (!searchTerm) return true;
+      
+      const term = searchTerm.toLowerCase().trim();
+      if (!term) return true;
+
+      // Check if this specific row matches
+      // 1. Name match (always show if name matches)
+      if (item.name.toLowerCase().includes(term)) return true;
+      
+      // 2. Supplier match
+      if (item.supplier && item.supplier.toLowerCase().includes(term)) return true;
+
+      // 3. Serial Number match (Partial match for this specific row)
+      // If this row has a serial number, check if it matches the search term partially
+      if (item.serialNumber && item.serialNumber.toLowerCase().includes(term)) return true;
+
+      // If the row has a serial number but it DOESN'T match the term, 
+      // AND the name/supplier didn't match (checked above), then hide this row.
+      // This ensures that if I search for "SN123", I only see the row with "SN123", 
+      // not "SN456" even if they belong to the same parent item.
+      
+      return false;
   });
 
   // Pagination calculations

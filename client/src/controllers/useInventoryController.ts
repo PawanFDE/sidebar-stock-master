@@ -63,9 +63,20 @@ export const useInventoryController = () => {
   // Filtered items based on search and category
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      const term = searchTerm.toLowerCase().trim();
+      
+      // If search term is empty, standard behavior (name check will pass)
+      // But we want to ensure we don't filter out everything if term is empty string due to trim
+      if (!term && searchTerm.trim() === '') {
+         // If the original search term was just whitespace or empty, we might want to match everything
+         // or let the name check handle it (includes('') is true).
+         // However, let's rely on the checks below.
+      }
+
       const matchesSearch = 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+        item.name.toLowerCase().includes(term) ||
+        (item.supplier && item.supplier.toLowerCase().includes(term)) ||
+        (item.serialNumber && item.serialNumber.toLowerCase().includes(term));
       
       const matchesCategory = 
         selectedCategory === 'all' || item.category === selectedCategory;

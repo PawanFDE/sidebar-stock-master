@@ -90,7 +90,7 @@ export default function InventoryList() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or supplier..."
+            placeholder="Search by name, supplier, or serial number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -118,6 +118,7 @@ export default function InventoryList() {
         onTransaction={handleTransaction}
         onView={handleView}
         onTransferSerial={handleTransferSerial}
+        searchTerm={searchTerm}
       />
 
       <Dialog open={!!viewingItem} onOpenChange={() => setViewingItem(null)}>
