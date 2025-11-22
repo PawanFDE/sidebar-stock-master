@@ -11,17 +11,27 @@ export default function AddItem() {
   const { categories, items, addItem } = useInventoryController();
 
   const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
-    await addItem(item);
-    navigate('/inventory');
+    try {
+      await addItem(item);
+      navigate('/inventory');
+    } catch (error) {
+      // Error is already handled/toasted in useInventoryController
+      console.error("Failed to add item:", error);
+    }
   };
 
   const handleSubmitMultiple = async (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => {
-    // Add all items without navigating
-    for (const item of items) {
-      await addItem(item);
+    try {
+      // Add all items without navigating
+      for (const item of items) {
+        await addItem(item);
+      }
+      // Navigate only after all items are added successfully
+      navigate('/inventory');
+    } catch (error) {
+      // Error is already handled/toasted in useInventoryController
+      console.error("Failed to add multiple items:", error);
     }
-    // Navigate only after all items are added
-    navigate('/inventory');
   };
 
   return (

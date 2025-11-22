@@ -125,6 +125,8 @@ const createInventoryItem = async (req, res) => {
             location,
             status: 'in-stock',
             description,
+            createdBy: req.user._id,
+            lastUpdatedBy: req.user._id,
           });
           
           const createdItem = await item.save();
@@ -151,6 +153,8 @@ const createInventoryItem = async (req, res) => {
           location,
           status: 'in-stock',
           description,
+          createdBy: req.user._id,
+          lastUpdatedBy: req.user._id,
         });
 
         const createdItem = await item.save();
@@ -172,6 +176,8 @@ const createInventoryItem = async (req, res) => {
         location,
         status: quantity === 0 ? 'out-of-stock' : 'in-stock',
         description,
+        createdBy: req.user._id,
+        lastUpdatedBy: req.user._id,
       });
 
       const createdItem = await item.save();
@@ -220,6 +226,7 @@ const updateInventoryItem = async (req, res) => {
       
       item.location = location !== undefined ? location : item.location;
       item.description = description !== undefined ? description : item.description;
+      item.lastUpdatedBy = req.user._id;
 
       item.status = item.quantity === 0 ? 'out-of-stock' : 'in-stock';
 

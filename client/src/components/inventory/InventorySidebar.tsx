@@ -1,38 +1,39 @@
 // View Component - Sidebar Navigation
 import { NavLink } from "@/components/NavLink";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/controllers/useAuth";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import {
-    ArrowRightLeft,
-    FolderOpen,
-    LayoutDashboard,
-    LogOut,
-    Package,
-    Truck,
-    User,
-    UserPlus,
+  Activity,
+  ArrowRightLeft,
+  FolderOpen,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Truck,
+  User,
+  UserPlus,
 } from "lucide-react";
 
 const navigationItems = [
@@ -112,6 +113,18 @@ export function InventorySidebar() {
               {userRole === "superadmin" && (
                 <>
                   <div className="my-3 mx-2 border-t border-sidebar-border" />
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/audit-logs"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200 group"
+                        activeClassName="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20 font-medium"
+                      >
+                        <Activity className="h-5 w-5 transition-transform group-hover:scale-110" />
+                        <span className="text-sm">Audit Logs</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
                       <NavLink

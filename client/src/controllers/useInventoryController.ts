@@ -4,11 +4,21 @@ import { Category, DashboardStats, InventoryItem } from '../models/inventory';
 
 // Utility for API calls
 async function api(endpoint: string, method: string = 'GET', data?: any) {
+  const userInfoString = localStorage.getItem('userInfo');
+  const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
+  const token = userInfo?.token;
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const config: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   };
 
   if (data) {
@@ -74,9 +84,9 @@ export const useInventoryController = () => {
       }
 
       const matchesSearch = 
-        item.name.toLowerCase().includes(term) ||
-        (item.supplier && item.supplier.toLowerCase().includes(term)) ||
-        (item.serialNumber && item.serialNumber.toLowerCase().includes(term));
+        (item.name?.toLowerCase() || '').includes(term) ||
+        (item.supplier?.toLowerCase() || '').includes(term) ||
+        (item.serialNumber?.toLowerCase() || '').includes(term);
       
       const matchesCategory = 
         selectedCategory === 'all' || item.category === selectedCategory;

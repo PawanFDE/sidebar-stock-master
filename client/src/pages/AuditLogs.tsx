@@ -1,0 +1,227 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { format } from "date-fns";
+import { Activity, Loader2, Search, Trash2 } from "lucide-react";
+import { useState } from "react";
+
+interface AuditLog {
+  id: string;
+  _id: string; // Add _id as fallback
+  itemId: string;
+  itemName: string;
+  itemCategory: string;
+  type: 'in' | 'out' | 'return' | 'transfer';
+  quantity: number;
+  branch?: string;
+  reason?: string;
+  serialNumber?: string;
+  performedBy?: {
+    username: string;
+    role: string;
+  };
+  createdAt: string;
+}
+
+export default function AuditLogs() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: logs, isLoading } = useQuery({
+    queryKey: ['auditLogs'],
+    queryFn: async () => {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/transactions/audit-logs`, {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+      return response.data as AuditLog[];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/transactions/audit-logs/${id}`, {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
+      toast({
+        title: "Log deleted",
+        description: "The audit log has been successfully removed.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to delete log",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this log? This action cannot be undone.")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const filteredLogs = logs?.filter(log => 
+    log.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.performedBy?.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (log.branch && log.branch.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (log.serialNumber && log.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <Activity className="h-8 w-8" />
+          Audit Logs
+        </h1>
+        <p className="text-muted-foreground">
+          Track all inventory activities performed by admins and sub-admins.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Activity History</CardTitle>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date & Time</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLogs?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No activity logs found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredLogs?.map((log) => (
+                    <TableRow key={log.id || log._id}>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(log.createdAt), "MMM d, yyyy HH:mm")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{log.performedBy?.username || 'Unknown'}</span>
+                          <span className="text-xs text-muted-foreground capitalize">{log.performedBy?.role || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          log.type === 'in' ? 'default' :
+                          log.type === 'out' ? 'destructive' :
+                          log.type === 'transfer' ? 'secondary' : 'outline'
+                        }>
+                          {log.type.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{log.itemName}</span>
+                          <span className="text-xs text-muted-foreground">{log.itemCategory}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-bold ${
+                          log.type === 'in' || log.type === 'return' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {log.type === 'in' || log.type === 'return' ? '+' : '-'}{log.quantity}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm space-y-1">
+                          {log.branch && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground font-medium">Branch:</span>
+                              {log.branch}
+                            </div>
+                          )}
+                          {log.serialNumber && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground font-medium">S/N:</span>
+                              <span className="font-mono text-xs">{log.serialNumber}</span>
+                            </div>
+                          )}
+                          {log.reason && (
+                            <div className="text-muted-foreground italic text-xs">
+                              "{log.reason}"
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          onClick={() => handleDelete(log.id || log._id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

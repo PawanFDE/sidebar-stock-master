@@ -48,6 +48,10 @@ const transactionSchema = new mongoose.Schema(
     reason: {
       type: String,
     },
+    performedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,

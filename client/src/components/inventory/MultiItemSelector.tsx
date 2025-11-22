@@ -6,9 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { InventoryItem } from "@/models/inventory";
+import { Category, InventoryItem } from "@/models/inventory";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Package, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ExtractedItem {
   name: string;
@@ -24,12 +31,13 @@ interface ExtractedItem {
 
 interface MultiItemSelectorProps {
   items: ExtractedItem[];
+  categories: Category[];
   existingItems?: InventoryItem[];
   onAddSelected: (selectedItems: ExtractedItem[]) => void;
   onCancel: () => void;
 }
 
-export function MultiItemSelector({ items, existingItems = [], onAddSelected, onCancel }: MultiItemSelectorProps) {
+export function MultiItemSelector({ items, categories, existingItems = [], onAddSelected, onCancel }: MultiItemSelectorProps) {
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
     new Set(items.map((_, index) => index)) // All items selected by default
   );
@@ -240,13 +248,21 @@ export function MultiItemSelector({ items, existingItems = [], onAddSelected, on
 
                           <div className="space-y-2">
                             <Label htmlFor={`category-${index}`} className="text-xs">Category *</Label>
-                            <Input
-                              id={`category-${index}`}
-                              value={item.category}
-                              onChange={(e) => handleFieldChange(index, 'category', e.target.value)}
-                              placeholder="Category"
-                              className="h-9"
-                            />
+                            <Select 
+                              value={item.category} 
+                              onValueChange={(value) => handleFieldChange(index, 'category', value)}
+                            >
+                              <SelectTrigger id={`category-${index}`} className="h-9">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.name}>
+                                    {cat.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           <div className="space-y-2">

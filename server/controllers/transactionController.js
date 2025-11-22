@@ -42,6 +42,8 @@ const createTransaction = async (req, res) => {
         model: transferTransaction.model || '',
         serialNumber: transferTransaction.serialNumber || '',
         status: 'in-stock',
+        createdBy: req.user._id,
+        lastUpdatedBy: req.user._id,
       });
     }
 
@@ -75,6 +77,7 @@ const createTransaction = async (req, res) => {
       } else {
         item.status = 'in-stock';
       }
+      item.lastUpdatedBy = req.user._id;
       updatedItem = await item.save();
     }
 
@@ -87,6 +90,7 @@ const createTransaction = async (req, res) => {
       quantity,
       branch,
       itemTrackingId, // Include itemTrackingId if provided
+      performedBy: req.user._id,
     });
 
     const createdTransaction = await transaction.save();
@@ -137,6 +141,7 @@ const transferItem = async (req, res) => {
     } else {
       // Otherwise, update the item status
       item.status = 'in-stock';
+      item.lastUpdatedBy = req.user._id;
       updatedItem = await item.save();
     }
 
@@ -153,6 +158,7 @@ const transferItem = async (req, res) => {
       serialNumber,
       itemTrackingId,
       reason,
+      performedBy: req.user._id,
     });
 
     const createdTransaction = await transaction.save();
@@ -328,6 +334,37 @@ const getAllTransferredItems = async (req, res) => {
   }
 };
 
+// @desc    Get audit logs for superadmin
+// @route   GET /api/transactions/audit-logs
+// @access  Private/Superadmin
+const getAuditLogs = async (req, res) => {
+  try {
+    const logs = await Transaction.find({})
+      .populate('performedBy', 'username role')
+      .sort({ createdAt: -1 });
+    res.status(200).json(logs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete an audit log
+// @route   DELETE /api/transactions/audit-logs/:id
+// @access  Private/Superadmin
+const deleteAuditLog = async (req, res) => {
+  try {
+    const log = await Transaction.findById(req.params.id);
+
+    if (!log) {
+      return res.status(404).json({ message: 'Audit log not found' });
+    }
+
+    await log.deleteOne();
+    res.status(200).json({ message: 'Audit log removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 module.exports = {
   createTransaction,
@@ -336,4 +373,6 @@ module.exports = {
   getBranches,
   getItemsByBranch,
   getAllTransferredItems,
+  getAuditLogs,
+  deleteAuditLog,
 };

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { protect } = require('../middleware/authMiddleware');
 
 const {
   getInventoryItems,
@@ -12,8 +13,8 @@ const {
   uploadInvoice,
 } = require('../controllers/inventoryController');
 
-router.route('/').get(getInventoryItems).post(createInventoryItem);
-router.post('/upload-invoice', upload.single('invoice'), uploadInvoice);
-router.route('/:id').get(getInventoryItemById).put(updateInventoryItem).delete(deleteInventoryItem);
+router.route('/').get(protect, getInventoryItems).post(protect, createInventoryItem);
+router.post('/upload-invoice', protect, upload.single('invoice'), uploadInvoice);
+router.route('/:id').get(protect, getInventoryItemById).put(protect, updateInventoryItem).delete(protect, deleteInventoryItem);
 
 module.exports = router;

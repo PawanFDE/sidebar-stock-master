@@ -1,20 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
@@ -159,24 +159,43 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const processFile = async (file: File) => {
-    const formDataToSend = new FormData();
-    formDataToSend.append('invoice', file);
+  const processFiles = async (files: File[]) => {
+    if (files.length === 0) return;
 
     setUploading(true);
-    try {
-      const response = await axios.post('http://localhost:5000/api/inventory/upload-invoice', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    const allExtractedItems: ExtractedItem[] = [];
+    let successCount = 0;
 
-      const { items } = response.data;
+    try {
+      for (const file of files) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('invoice', file);
+
+        try {
+          const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+          const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/inventory/upload-invoice`, formDataToSend, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${userInfo.token}`,
+            },
+          });
+
+          const { items } = response.data;
+          
+          if (items && items.length > 0) {
+            allExtractedItems.push(...items);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Error uploading file ${file.name}:`, error);
+          toast.error(`Failed to extract data from ${file.name}`);
+        }
+      }
       
-      if (items && items.length > 0) {
-        if (items.length === 1) {
+      if (allExtractedItems.length > 0) {
+        if (allExtractedItems.length === 1) {
           // Single item - auto-fill the form
-          const extractedData = items[0];
+          const extractedData = allExtractedItems[0];
           setFormData(prev => ({
             ...prev,
             name: extractedData.name || prev.name,
@@ -193,30 +212,29 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           toast.success("Invoice data extracted successfully!");
         } else {
           // Multiple items - show selector
-          setExtractedItems(items);
+          setExtractedItems(allExtractedItems);
           setShowItemSelector(true);
-          toast.success(`Found ${items.length} items in the invoice!`);
+          toast.success(`Found ${allExtractedItems.length} items from ${successCount} invoice(s)!`);
         }
       }
     } catch (error) {
-      console.error("Error uploading invoice:", error);
-      toast.error("Failed to extract data from invoice.");
+      console.error("Error processing invoices:", error);
+      toast.error("An unexpected error occurred while processing invoices.");
     } finally {
       setUploading(false);
     }
   };
 
   const handleFileDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      processFile(file);
+    if (acceptedFiles.length > 0) {
+      processFiles(acceptedFiles);
     }
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    await processFile(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await processFiles(Array.from(files));
     // Reset file input
     e.target.value = '';
   };
@@ -227,7 +245,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       'image/*': [],
       'application/pdf': []
     },
-    multiple: false,
+    multiple: true,
     disabled: uploading,
   });
 
@@ -279,6 +297,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           </DialogHeader>
           <MultiItemSelector
             items={extractedItems}
+            categories={categories}
             existingItems={existingItems}
             onAddSelected={handleAddSelectedItems}
             onCancel={() => setShowItemSelector(false)}
@@ -302,7 +321,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
             <Upload className="h-8 w-8 text-muted-foreground" />
           )}
           <span className="text-sm font-medium text-center">
-            {uploading ? "Processing Invoice..." : (isDragActive ? "Drop the invoice here" : "Drag & drop an invoice here, or click to select a file")}
+            {uploading ? "Processing Invoice(s)..." : (isDragActive ? "Drop the invoice(s) here" : "Drag & drop invoice(s) here, or click to select files")}
           </span>
           <span className="text-xs text-muted-foreground">
             Supports Images and PDFs
