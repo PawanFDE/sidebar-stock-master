@@ -7,6 +7,7 @@ const connectDB = require('./config/db');
 const inventoryRoutes = require('./routes/inventory');
 const categoryRoutes = require('./routes/category');
 const transactionRoutes = require('./routes/transaction');
+const userRoutes = require('./routes/user');
 
 connectDB();
 
@@ -22,7 +23,6 @@ app.get('/', (req, res) => {
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
-const userRoutes = require('./routes/user');
 app.use('/api/users', userRoutes);
 
 // Error handling middleware
@@ -33,6 +33,10 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
