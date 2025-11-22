@@ -1,9 +1,9 @@
+import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
 
-const API_URL = 'http://localhost:5000/api/users'; // Assuming backend runs on 5000
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/users`;
 
 export const useLogin = () => {
   const navigate = useNavigate();
