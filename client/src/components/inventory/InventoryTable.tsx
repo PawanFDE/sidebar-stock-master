@@ -27,8 +27,9 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-    TableRow,
+    TableRow
 } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
 import { InventoryItem } from "@/models/inventory";
 import { ArrowRightLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -36,7 +37,7 @@ import { useState } from "react";
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
-  onDelete: (id: string, serialNumber?: string | string[]) => void;
+  onDelete: (id: string, serialNumber?: string | string[], options?: { silent?: boolean }) => void;
   onTransaction: (item: InventoryItem) => void;
   onView: (item: InventoryItem) => void;
   onTransferSerial?: (item: InventoryItem, serialNumber: string) => void;
@@ -135,6 +136,8 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
     setSelectedItems(newSelected);
   };
 
+  const { toast } = useToast();
+
   const handleBulkDelete = async () => {
     // Group selected items by ID
     const itemsToDelete = new Map<string, string[]>();
@@ -156,18 +159,28 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
       }
     });
 
+    let deletedCount = 0;
+
     // Process full deletes
     for (const id of fullDeletes) {
-        await onDelete(id);
+        await onDelete(id, undefined, { silent: true });
+        deletedCount++;
     }
 
     // Process partial deletes (specific serials)
     for (const [id, serials] of itemsToDelete) {
         // Only delete specific serials if the item wasn't already fully deleted
         if (!fullDeletes.has(id)) {
-            await onDelete(id, serials);
+            await onDelete(id, serials, { silent: true });
+            deletedCount += serials.length;
         }
     }
+
+    toast({
+      title: 'Items deleted',
+      description: `Successfully deleted ${deletedCount} item(s).`,
+      variant: 'destructive',
+    });
 
     // Clear selection after delete
     setSelectedItems(new Set());

@@ -1,6 +1,7 @@
 // View - Add Item Page
 import { ItemForm } from "@/components/inventory/ItemForm";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import { InventoryItem } from "@/models/inventory";
 import { ArrowLeft } from "lucide-react";
@@ -8,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function AddItem() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { categories, items, addItem } = useInventoryController();
 
   const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
@@ -22,10 +24,23 @@ export default function AddItem() {
 
   const handleSubmitMultiple = async (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => {
     try {
+      const categoryCounts: Record<string, number> = {};
+
       // Add all items without navigating
       for (const item of items) {
-        await addItem(item);
+        await addItem(item, { silent: true });
+        const cat = item.category || 'Uncategorized';
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
       }
+
+      // Show summary toast(s)
+      Object.entries(categoryCounts).forEach(([cat, count]) => {
+        toast({
+          title: 'Items added',
+          description: `Successfully added ${count} items to ${cat} category.`,
+        });
+      });
+
       // Navigate only after all items are added successfully
       navigate('/inventory');
     } catch (error) {

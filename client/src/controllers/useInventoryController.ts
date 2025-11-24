@@ -27,6 +27,12 @@ async function api(endpoint: string, method: string = 'GET', data?: any) {
 
   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, config);
 
+  if (response.status === 401) {
+    localStorage.removeItem('userInfo');
+    window.location.href = '/login';
+    throw new Error('Session expired. Please login again.');
+  }
+
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || 'Something went wrong');
@@ -115,14 +121,18 @@ export const useInventoryController = () => {
   }, [items, categories]);
 
   // Add new item
-  const addItem = useCallback(async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
+  const addItem = useCallback(async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>, options?: { silent?: boolean }) => {
     try {
       const newItem = await api('/inventory', 'POST', item); // POST /api/inventory
       setItems(prev => [...prev, newItem]);
-      toast({
-        title: 'Item added',
-        description: `${newItem.name} has been added to inventory.`,
-      });
+      
+      if (!options?.silent) {
+        toast({
+          title: 'Item added',
+          description: `${newItem.name} has been added to inventory.`,
+        });
+      }
+      
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
       return newItem;
@@ -161,7 +171,7 @@ export const useInventoryController = () => {
   }, [fetchItemsAndCategories]);
 
   // Delete item
-  const deleteItem = useCallback(async (id: string, serialNumber?: string | string[]) => {
+  const deleteItem = useCallback(async (id: string, serialNumber?: string | string[], options?: { silent?: boolean }) => {
     try {
       const itemToDelete = items.find(i => i.id === id);
       if (!itemToDelete) return;
@@ -203,11 +213,14 @@ export const useInventoryController = () => {
         // Original full delete
         await api(`/inventory/${id}`, 'DELETE');
         setItems(prev => prev.filter(item => item.id !== id));
-        toast({
-          title: 'Item deleted',
-          description: `${itemToDelete?.name} has been removed from inventory.`,
-          variant: 'destructive',
-        });
+        
+        if (!options?.silent) {
+          toast({
+            title: 'Item deleted',
+            description: `${itemToDelete?.name} has been removed from inventory.`,
+            variant: 'destructive',
+          });
+        }
       }
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
