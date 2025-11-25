@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import InventoryList from "./pages/InventoryList";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
+import PendingReplacementsPage from "./pages/PendingReplacementsPage";
 import TransferredItemsList from "./pages/TransferredItemsList";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/add-item" element={<AddItem />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/transferred-items" element={<TransferredItemsList />} />
+            <Route path="/pending-replacements" element={<PendingReplacementsPage />} />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
             <Route path="/add-subadmin" element={<AddSubAdminPage />} />

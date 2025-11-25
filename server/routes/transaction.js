@@ -10,12 +10,16 @@ const {
   getAllTransferredItems,
   getAuditLogs,
   deleteAuditLog,
+  getPendingReplacements,
+  confirmPendingReplacement,
 } = require('../controllers/transactionController');
 
 router.route('/').post(protect, createTransaction);
 router.route('/transfer').post(protect, transferItem);
 router.route('/branches').get(protect, getBranches);
 router.route('/transferred-items').get(protect, getAllTransferredItems);
+router.route('/pending-replacements').get(protect, getPendingReplacements);
+router.route('/pending-replacements/:id/confirm').put(protect, confirmPendingReplacement);
 router.route('/audit-logs').get(protect, superadmin, getAuditLogs);
 router.route('/audit-logs/:id').delete(protect, superadmin, deleteAuditLog);
 router.route('/branch/:branchName').get(protect, getItemsByBranch);

@@ -67,7 +67,6 @@ const getInventoryItems = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 // @desc    Get single inventory item by ID
 // @route   GET /api/inventory/:id
 // @access  Public
@@ -88,15 +87,17 @@ const getInventoryItemById = async (req, res) => {
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description, allowDuplicates } = req.body;
 
   try {
     // Check for duplicate serial numbers
-    const duplicate = await checkDuplicateSerialNumbers(serialNumber);
-    if (duplicate) {
-      return res.status(400).json({ 
-        message: `Serial number '${duplicate.serial}' already exists in item '${duplicate.existingItemName}'.` 
-      });
+    if (!allowDuplicates) {
+      const duplicate = await checkDuplicateSerialNumbers(serialNumber);
+      if (duplicate) {
+        return res.status(400).json({ 
+          message: `Serial number '${duplicate.serial}' already exists in item '${duplicate.existingItemName}'.` 
+        });
+      }
     }
 
     const warrantyExpiryDate = calculateWarrantyExpiry(warranty);
@@ -193,14 +194,14 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description, allowDuplicates } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
 
     if (item) {
       // Check for duplicate serial numbers, excluding current item
-      if (serialNumber !== undefined) {
+      if (serialNumber !== undefined && !allowDuplicates) {
          const duplicate = await checkDuplicateSerialNumbers(serialNumber, req.params.id);
          if (duplicate) {
            return res.status(400).json({ 

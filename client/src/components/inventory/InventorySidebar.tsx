@@ -1,39 +1,39 @@
 // View Component - Sidebar Navigation
 import { NavLink } from "@/components/NavLink";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
+    Sidebar,
+    SidebarContent,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/controllers/useAuth";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import {
-  Activity,
-  ArrowRightLeft,
-  FolderOpen,
-  LayoutDashboard,
-  LogOut,
-  Package,
-  Truck,
-  User,
-  UserPlus,
+    Activity,
+    ArrowRightLeft,
+    Clock,
+    FolderOpen,
+    LayoutDashboard,
+    LogOut,
+    Package,
+    User,
+    UserPlus
 } from "lucide-react";
 
 const navigationItems = [
@@ -45,6 +45,11 @@ const navigationItems = [
     icon: ArrowRightLeft,
   },
   { title: "Categories", url: "/categories", icon: FolderOpen },
+  {
+    title: "Pending Replacements",
+    url: "/pending-replacements",
+    icon: Clock,
+  },
 ];
 
 export function InventorySidebar() {
@@ -73,8 +78,8 @@ export function InventorySidebar() {
         {/* Logo/Brand Section */}
         <div className={`px-4 py-6 border-b border-sidebar-border ${!open ? "px-2" : ""}`}>
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 ${open ? "w-10 h-10" : "w-8 h-8"} transition-all`}>
-              <Truck className={`text-white ${open ? "h-6 w-6" : "h-5 w-5"}`} />
+            <div className={`flex items-center justify-center rounded-lg ${open ? "w-12 h-12" : "w-8 h-8"} transition-all`}>
+              <img src="/logo.png" alt="Logo" className={`object-contain ${open ? "h-10 w-10" : "h-6 w-6"}`} />
             </div>
             {open && (
               <div className="flex flex-col">

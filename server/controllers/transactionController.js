@@ -1,5 +1,6 @@
 const Transaction = require('../models/transaction');
 const InventoryItem = require('../models/inventory');
+const PendingReplacement = require('../models/pendingReplacement');
 
 // @desc    Create a new transaction
 // @route   POST /api/transactions
@@ -115,6 +116,19 @@ const transferItem = async (req, res) => {
     return res.status(400).json({ message: 'Missing required fields for transfer: itemId, quantity, branch, itemTrackingId' });
   }
 
+  // Validate Item Tracking ID format
+  if (!itemTrackingId.startsWith('CRE')) {
+    return res.status(400).json({ message: 'Item Tracking ID must start with "CRE"' });
+  }
+
+  // Validate Reason
+  const validReasons = ['New Equipment', 'Replacement Equipment', 'Repaired'];
+  const isValidReason = validReasons.some(r => reason === r || reason.startsWith(r + ' - '));
+  
+  if (reason && !isValidReason) {
+    return res.status(400).json({ message: 'Invalid reason provided' });
+  }
+
   try {
     const item = await InventoryItem.findById(itemId);
 
@@ -162,6 +176,19 @@ const transferItem = async (req, res) => {
     });
 
     const createdTransaction = await transaction.save();
+
+    // If reason is Replacement Equipment, add to PendingReplacement
+    if (reason && reason.startsWith('Replacement Equipment')) {
+      await PendingReplacement.create({
+        transactionId: createdTransaction._id,
+        itemId,
+        itemName: item.name,
+        branch,
+        itemTrackingId,
+        reason,
+        status: 'Pending'
+      });
+    }
 
     res.status(201).json({
       transaction: createdTransaction,
@@ -366,6 +393,38 @@ const deleteAuditLog = async (req, res) => {
   }
 };
 
+// @desc    Get all pending replacements
+// @route   GET /api/transactions/pending-replacements
+// @access  Public
+const getPendingReplacements = async (req, res) => {
+  try {
+    const pending = await PendingReplacement.find({}).sort({ createdAt: -1 });
+    res.status(200).json(pending);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Confirm a pending replacement
+// @route   PUT /api/transactions/pending-replacements/:id/confirm
+// @access  Public
+const confirmPendingReplacement = async (req, res) => {
+  try {
+    const pending = await PendingReplacement.findById(req.params.id);
+
+    if (!pending) {
+      return res.status(404).json({ message: 'Pending replacement not found' });
+    }
+
+    // Remove from pending list (delete the document)
+    await pending.deleteOne();
+
+    res.status(200).json({ message: 'Pending replacement confirmed and removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createTransaction,
   transferItem,
@@ -375,4 +434,6 @@ module.exports = {
   getAllTransferredItems,
   getAuditLogs,
   deleteAuditLog,
+  getPendingReplacements,
+  confirmPendingReplacement,
 };

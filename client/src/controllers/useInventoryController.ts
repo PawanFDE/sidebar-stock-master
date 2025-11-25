@@ -348,6 +348,51 @@ export const useInventoryController = () => {
     }
   }, []);
 
+  // Get all pending replacements
+  const getPendingReplacements = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const pendingReplacements = await api('/transactions/pending-replacements'); // GET /api/transactions/pending-replacements
+      return pendingReplacements;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error fetching pending replacements',
+        description: err.message,
+        variant: 'destructive',
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Confirm pending replacement
+  const confirmPendingReplacement = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api(`/transactions/pending-replacements/${id}/confirm`, 'PUT'); // PUT /api/transactions/pending-replacements/:id/confirm
+      toast({
+        title: 'Replacement Confirmed',
+        description: 'The pending replacement has been confirmed and removed from the list.',
+      });
+      // Refresh the list
+      return await getPendingReplacements();
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error confirming replacement',
+        description: err.message,
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [getPendingReplacements]);
+
   return {
     items: filteredItems,
     allItems: items,
@@ -364,6 +409,8 @@ export const useInventoryController = () => {
     deleteCategory,
     createTransaction,
     getTransferredItems,
+    getPendingReplacements,
+    confirmPendingReplacement,
     loading,
     error,
   };

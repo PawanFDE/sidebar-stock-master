@@ -3,18 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
-import { Activity, Loader2, Search, Trash2 } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Loader2, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface AuditLog {
@@ -37,6 +37,8 @@ interface AuditLog {
 
 export default function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -92,6 +94,17 @@ export default function AuditLogs() {
     (log.serialNumber && log.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLogs = filteredLogs?.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil((filteredLogs?.length || 0) / itemsPerPage);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -121,7 +134,7 @@ export default function AuditLogs() {
               <Input
                 placeholder="Search logs..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-8"
               />
             </div>
@@ -142,14 +155,14 @@ export default function AuditLogs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs?.length === 0 ? (
+                {currentLogs?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No activity logs found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLogs?.map((log) => (
+                  currentLogs?.map((log) => (
                     <TableRow key={log.id || log._id}>
                       <TableCell className="whitespace-nowrap">
                         {format(new Date(log.createdAt), "MMM d, yyyy HH:mm")}
@@ -221,6 +234,58 @@ export default function AuditLogs() {
             </Table>
           </div>
         </CardContent>
+        {filteredLogs && filteredLogs.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredLogs.length)} of {filteredLogs.length} entries
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  // Logic to show a window of pages around current page could be added here
+                  // For simplicity, showing first 5 or simple logic
+                  let pageNum = i + 1;
+                  if (totalPages > 5) {
+                    if (currentPage > 3) {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    if (pageNum > totalPages) return null;
+                  }
+                  
+                  return (
+                     <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

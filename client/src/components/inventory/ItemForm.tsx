@@ -1,20 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
@@ -29,8 +30,8 @@ interface ItemFormProps {
   item?: InventoryItem;
   categories: Category[];
   existingItems?: InventoryItem[];
-  onSubmit: (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => void;
-  onSubmitMultiple?: (items: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>[]) => void;
+  onSubmit: (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'> & { allowDuplicates?: boolean }) => void;
+  onSubmitMultiple?: (items: (Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'> & { allowDuplicates?: boolean })[]) => void;
   onCancel?: () => void;
 }
 
@@ -61,6 +62,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
     location: item?.location || '',
   });
 
+  const [allowDuplicates, setAllowDuplicates] = useState(false);
   const [isMultiMode, setIsMultiMode] = useState(false);
 
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
@@ -142,6 +144,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         ...formData,
         serialNumber: sn,
         quantity: 1, // Each item with a serial number has a quantity of 1
+        allowDuplicates,
       }));
       onSubmitMultiple(itemsToCreate);
     } else {
@@ -151,6 +154,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         // Ensure quantity is at least 1 if not in multi-mode
         quantity: formData.quantity > 0 ? formData.quantity : 1,
         serialNumber: serialNumbers.join(', '), // Consolidate back to a string
+        allowDuplicates,
       });
     }
   };
@@ -387,11 +391,28 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
                 className={`min-h-[100px] ${duplicateError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
               {duplicateError && (
-                <p className="text-sm font-medium text-destructive mt-1">
-                  {duplicateError}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm font-medium text-destructive">
+                    {duplicateError}
+                  </p>
+                </div>
               )}
-              <p className="text-xs text-muted-foreground">
+              
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox 
+                  id="allowDuplicates" 
+                  checked={allowDuplicates}
+                  onCheckedChange={(checked) => setAllowDuplicates(checked as boolean)}
+                />
+                <label
+                  htmlFor="allowDuplicates"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Allow duplicate serial numbers (Not recommended)
+                </label>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-1">
                 For multiple items, list each serial number. The quantity will be automatically calculated.
               </p>
             </div>
@@ -434,7 +455,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1" disabled={!!duplicateError}>
+            <Button type="submit" className="flex-1" disabled={!!duplicateError && !allowDuplicates}>
               {item ? 'Update Item' : 'Add Item'}
             </Button>
             {onCancel && (

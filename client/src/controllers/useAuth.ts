@@ -58,6 +58,7 @@ export const useRegister = () => {
 
 export const useAddSubAdmin = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (userData: { username: string; password: string }) => {
@@ -75,6 +76,7 @@ export const useAddSubAdmin = () => {
         title: 'Sub-admin Added',
         description: 'New sub-admin has been successfully created.',
       });
+      queryClient.invalidateQueries({ queryKey: ['subAdmins'] });
     },
     onError: (error: any) => {
       toast({
