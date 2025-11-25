@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
 import axios from "axios";
-import { Loader2, Upload } from "lucide-react";
+import { AlertCircle, Building2, CheckCircle2, Hash, Loader2, MapPin, Package, Shield, Tag, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
     model: item?.model || '',
     serialNumber: item?.serialNumber || '',
     warranty: item?.warranty || '',
-    location: item?.location || '',
+    location: item?.location || 'Headoffice',
   });
 
   const [allowDuplicates, setAllowDuplicates] = useState(false);
@@ -309,157 +309,243 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         </DialogContent>
       </Dialog>
 
-      <Card>
-      <CardHeader>
-        <CardTitle>{item ? 'Edit Item' : 'Add New Item'}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div 
-          {...getRootProps()} 
-          className={`mb-6 p-4 border-2 border-dashed rounded-lg bg-muted/50 cursor-pointer flex flex-col items-center gap-2 transition-colors ${isDragActive ? 'border-primary' : ''}`}
-        >
-          <input {...getInputProps()} id="invoice-upload" />
-          {uploading ? (
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          ) : (
-            <Upload className="h-8 w-8 text-muted-foreground" />
-          )}
-          <span className="text-sm font-medium text-center">
-            {uploading ? "Processing Invoice(s)..." : (isDragActive ? "Drop the invoice(s) here" : "Drag & drop invoice(s) here, or click to select files")}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Supports Images and PDFs
-          </span>
+      <Card className="border-border/50 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-b">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-md">
+            <Package className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <CardTitle className="text-xl font-bold">{item ? 'Edit Item' : 'Add New Item'}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {item ? 'Update inventory item details' : 'Add a new item to your inventory'}
+            </p>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Item Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                required
-                placeholder="e.g., Laptop Dell XPS 15"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier</Label>
-              <Input
-                id="supplier"
-                value={formData.supplier}
-                onChange={(e) => handleChange('supplier', e.target.value)}
-                placeholder="e.g., Tech Distributors Inc."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Input
-                id="model"
-                value={formData.model}
-                onChange={(e) => handleChange('model', e.target.value)}
-                placeholder="e.g., XPS 15"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="serialNumber">Serial Number(s)</Label>
-              <Textarea
-                id="serialNumber"
-                value={formData.serialNumber}
-                onChange={(e) => handleChange('serialNumber', e.target.value)}
-                placeholder="Enter each serial number on a new line or separated by commas."
-                className={`min-h-[100px] ${duplicateError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-              />
-              {duplicateError && (
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm font-medium text-destructive">
-                    {duplicateError}
-                  </p>
-                </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {!item && (
+          <div 
+            {...getRootProps()} 
+            className={`mb-8 p-6 border-2 border-dashed rounded-xl bg-gradient-to-br from-muted/30 to-muted/50 cursor-pointer flex flex-col items-center gap-3 transition-all hover:border-primary/50 hover:bg-primary/5 ${isDragActive ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-border'}`}
+          >
+            <input {...getInputProps()} id="invoice-upload" />
+            <div className={`p-4 rounded-full ${uploading ? 'bg-primary/10' : 'bg-background'} transition-colors`}>
+              {uploading ? (
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              ) : (
+                <Upload className="h-10 w-10 text-primary" />
               )}
-              
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox 
-                  id="allowDuplicates" 
-                  checked={allowDuplicates}
-                  onCheckedChange={(checked) => setAllowDuplicates(checked as boolean)}
-                />
-                <label
-                  htmlFor="allowDuplicates"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Allow duplicate serial numbers (Not recommended)
-                </label>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-1">
-                For multiple items, list each serial number. The quantity will be automatically calculated.
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-base font-semibold text-foreground">
+                {uploading ? "Processing Invoice(s)..." : (isDragActive ? "Drop the invoice(s) here" : "Upload Invoice to Auto-Fill")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {!uploading && !isDragActive && "Drag & drop invoice(s) here, or click to browse"}
+              </p>
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Supports Images and PDFs
               </p>
             </div>
+          </div>
+        )}
 
-            <div className="space-y-2">
-              <Label htmlFor="warranty">Warranty Period</Label>
-              <Input
-                id="warranty"
-                value={formData.warranty}
-                onChange={(e) => handleChange('warranty', e.target.value)}
-                placeholder="e.g., 3 Years, 12 Months"
-              />
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Basic Information Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b">
+              <Package className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-bold text-foreground">Basic Information</h3>
+              <span className="ml-auto text-xs text-destructive font-medium">* Required</span>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="quantity">{item ? 'Current Quantity *' : 'Adding Quantity *'}</Label>
-              <Input
-                id="quantity"
-                type="number"
-                value={formData.quantity}
-                onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 0)}
-                required
-                min="0"
-                // Disable quantity if in multi-mode
-                disabled={isMultiMode}
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-primary" />
+                  Item Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  required
+                  placeholder="e.g., Laptop Dell XPS 15"
+                  className="h-11"
+                />
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-primary" />
+                  Category <span className="text-destructive">*</span>
+                </Label>
+                <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
+                  <SelectTrigger className={`h-11 ${formData.category ? 'border-primary/50 bg-primary/5' : ''}`}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="location">Storage Location *</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleChange('location', e.target.value)}
-                required
-                placeholder="e.g., Warehouse A, Shelf 12"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="supplier" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  Supplier
+                </Label>
+                <Input
+                  id="supplier"
+                  value={formData.supplier}
+                  onChange={(e) => handleChange('supplier', e.target.value)}
+                  placeholder="e.g., Tech Distributors Inc."
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="model" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  Model
+                </Label>
+                <Input
+                  id="model"
+                  value={formData.model}
+                  onChange={(e) => handleChange('model', e.target.value)}
+                  placeholder="e.g., XPS 15"
+                  className="h-11"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" className="flex-1" disabled={!!duplicateError && !allowDuplicates}>
+          {/* Serial Numbers & Quantity Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b">
+              <Hash className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-bold text-foreground">Serial Numbers & Quantity</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="serialNumber" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                  Serial Number(s)
+                </Label>
+                <Textarea
+                  id="serialNumber"
+                  value={formData.serialNumber}
+                  onChange={(e) => handleChange('serialNumber', e.target.value)}
+                  placeholder="Enter each serial number on a new line or separated by commas."
+                  className={`min-h-[100px] ${duplicateError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                />
+                {duplicateError && (
+                  <div className="flex items-center gap-2 mt-1 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+                    <p className="text-sm font-medium text-destructive">
+                      {duplicateError}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox 
+                    id="allowDuplicates" 
+                    checked={allowDuplicates}
+                    onCheckedChange={(checked) => setAllowDuplicates(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="allowDuplicates"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Allow duplicate serial numbers (Not recommended)
+                  </label>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                  For multiple items, list each serial number. The quantity will be automatically calculated.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quantity" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-primary" />
+                  {item ? 'Current Quantity' : 'Adding Quantity'} <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => handleChange('quantity', parseInt(e.target.value) || 0)}
+                  required
+                  min="0"
+                  disabled={isMultiMode}
+                  className="h-11"
+                />
+                {isMultiMode && (
+                  <p className="text-xs text-muted-foreground">Auto-calculated from serial numbers</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="warranty" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                  Warranty Period
+                </Label>
+                <Input
+                  id="warranty"
+                  value={formData.warranty}
+                  onChange={(e) => handleChange('warranty', e.target.value)}
+                  placeholder="e.g., 3 Years, 12 Months"
+                  className="h-11"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Location Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b">
+              <MapPin className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-bold text-foreground">Storage Location</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location" className="text-sm font-semibold flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                Storage Location <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="location"
+                value="Headoffice"
+                readOnly
+                disabled
+                required
+                className="h-11 bg-muted cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">All items are stored at Headoffice by default</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t">
+            <Button 
+              type="submit" 
+              className="flex-1 h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all" 
+              disabled={!!duplicateError && !allowDuplicates}
+            >
+              <Package className="h-4 w-4 mr-2" />
               {item ? 'Update Item' : 'Add Item'}
             </Button>
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button type="button" variant="outline" onClick={onCancel} className="h-11 px-6">
                 Cancel
               </Button>
             )}

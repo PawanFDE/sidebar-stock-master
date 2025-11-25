@@ -14,6 +14,7 @@ export interface InventoryItem {
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
   lastUpdated: Date;
+  createdAt?: Date;
   description?: string;
 }
 

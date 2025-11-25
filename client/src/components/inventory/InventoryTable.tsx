@@ -283,13 +283,14 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
               <TableHead>Category</TableHead>
               <TableHead>Quantity</TableHead>
               <TableHead>Model</TableHead>
+              <TableHead>Date Added</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No items found. Add your first inventory item to get started.
                 </TableCell>
               </TableRow>
@@ -326,6 +327,13 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
                     <span className="font-semibold">{item.quantity}</span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{item.model || 'N/A'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    }) : 'N/A'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       <Button
