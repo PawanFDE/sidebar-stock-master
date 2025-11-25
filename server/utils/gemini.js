@@ -26,7 +26,7 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
       **IMPORTANT: The text in this image may be rotated or sideways. Read text in ALL orientations (0°, 90°, 180°, 270°).**
       
       Extract these fields for EACH item in JSON format:
-      - name: The item/product name (be specific and concise)
+      - name: The item/product name (be VERY SHORT and include the item BRAND. Format: "Brand - Short Name")
       - category: ${categoryInstructions}
       - quantity: The quantity purchased (look for "Qty", "Quantity", or count. Default to 1 if not found)
       - supplier: The supplier/vendor/company name (look at the top of the invoice - this will be the same for all items)

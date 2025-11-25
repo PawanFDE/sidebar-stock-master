@@ -271,6 +271,7 @@ const getAllTransferredItems = async (req, res) => {
   try {
     const transferredItems = await Transaction.aggregate([
       { $match: { type: { $in: ['transfer', 'return'] } } }, // Match both 'transfer' and 'return' transactions
+      { $sort: { createdAt: 1 } }, // Ensure transactions are processed in order
       {
         $addFields: {
           // Make return quantities negative for proper calculation
@@ -299,6 +300,7 @@ const getAllTransferredItems = async (req, res) => {
           // Store original item info from transaction in case item is deleted
           itemName: { $last: '$itemName' },
           itemCategory: { $last: '$itemCategory' },
+          transferDate: { $last: '$createdAt' },
         },
       },
       // Filter out items with zero or negative net quantity
@@ -327,6 +329,7 @@ const getAllTransferredItems = async (req, res) => {
           serialNumber: '$serialNumber',
           itemTrackingId: '$_id.itemTrackingId',
           reason: '$reason',
+          transferDate: '$transferDate',
         },
       },
       {
@@ -343,6 +346,7 @@ const getAllTransferredItems = async (req, res) => {
               serialNumber: '$serialNumber',
               itemTrackingId: '$itemTrackingId',
               reason: '$reason',
+              transferDate: '$transferDate',
             },
           },
         },

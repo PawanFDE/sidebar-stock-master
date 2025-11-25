@@ -44,12 +44,12 @@ const navigationItems = [
     url: "/transferred-items",
     icon: ArrowRightLeft,
   },
-  { title: "Categories", url: "/categories", icon: FolderOpen },
   {
     title: "Pending Replacements",
     url: "/pending-replacements",
     icon: Clock,
   },
+  { title: "Categories", url: "/categories", icon: FolderOpen },
 ];
 
 export function InventorySidebar() {

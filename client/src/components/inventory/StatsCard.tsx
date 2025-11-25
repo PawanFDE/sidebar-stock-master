@@ -1,6 +1,6 @@
 // View Component - Dashboard Statistics Card
-import { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
@@ -11,9 +11,10 @@ interface StatsCardProps {
     isPositive: boolean;
   };
   variant?: 'default' | 'success' | 'warning' | 'info';
+  className?: string; // Added className prop
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) {
+export function StatsCard({ title, value, icon: Icon, trend, variant = 'default', className }: StatsCardProps) {
   const variantClasses = {
     default: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
@@ -22,7 +23,7 @@ export function StatsCard({ title, value, icon: Icon, trend, variant = 'default'
   };
 
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className={`transition-all hover:shadow-md ${className || ''}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">

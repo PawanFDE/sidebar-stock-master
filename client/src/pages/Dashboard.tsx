@@ -1,14 +1,17 @@
 // View - Dashboard Page
 import { StatsCard } from "@/components/inventory/StatsCard";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventoryController } from "@/controllers/useInventoryController";
-import { FolderOpen, Package, TrendingDown, Users } from "lucide-react";
+import { Activity, AlertCircle, ArrowUpRight, FolderOpen, Package, TrendingDown, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { stats, allItems } = useInventoryController();
   const [subAdminCount, setSubAdminCount] = useState<number>(0);
+  const navigate = useNavigate();
 
   // Get user info from localStorage to check role
   const userInfoString = localStorage.getItem("userInfo");
@@ -56,12 +59,22 @@ export default function Dashboard() {
     .slice(0, 5);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Overview of your inventory system
-        </p>
+    <div className="space-y-8 p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Overview of your inventory system performance and alerts
+          </p>
+        </div>
+        <div className="flex gap-2">
+           <Button onClick={() => navigate('/inventory')} variant="outline">
+             View Inventory
+           </Button>
+           <Button onClick={() => navigate('/add-item')}>
+             Add New Item
+           </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -71,18 +84,21 @@ export default function Dashboard() {
           icon={Package}
           variant="info"
           trend={{ value: 12, isPositive: true }}
+          className="bg-blue-50/50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900"
         />
         <StatsCard
           title="Low Stock Alerts"
           value={stats.lowStockItems}
           icon={TrendingDown}
           variant="warning"
+          className="bg-orange-50/50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900"
         />
         <StatsCard
           title="Categories"
           value={stats.categories}
           icon={FolderOpen}
           variant="default"
+          className="bg-purple-50/50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900"
         />
         {userRole === "superadmin" && (
           <StatsCard
@@ -90,17 +106,26 @@ export default function Dashboard() {
             value={subAdminCount}
             icon={Users}
             variant="info"
+            className="bg-green-50/50 border-green-100 dark:bg-green-950/20 dark:border-green-900"
           />
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Low Stock Alerts</CardTitle>
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-500" />
+                        Critical Stock Alerts
+                    </CardTitle>
+                    <CardDescription>Items and categories running low on stock</CardDescription>
+                </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Category Alerts */}
               {Object.entries(allItems.reduce((acc, item) => {
                 const cat = item.category || 'Uncategorized';
@@ -111,20 +136,20 @@ export default function Dashboard() {
               .map(([category, total]) => (
                 <div
                   key={`cat-${category}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-destructive/10 border border-destructive/20"
+                  className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100 dark:bg-red-950/20 dark:border-red-900"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="h-4 w-4 text-destructive" />
-                      <p className="font-medium text-sm text-destructive">Category: {category}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-full">
+                        <FolderOpen className="h-5 w-5 text-red-600 dark:text-red-400" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">Critical category stock level</p>
+                    <div>
+                        <p className="font-semibold text-red-900 dark:text-red-200">{category}</p>
+                        <p className="text-sm text-red-700/80 dark:text-red-400/80">Critical category stock level</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-destructive">{total}</p>
-                      <p className="text-xs text-destructive/80">total units</p>
-                    </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-red-700 dark:text-red-400">{total}</p>
+                    <p className="text-xs font-medium text-red-600/80 dark:text-red-400/80">TOTAL UNITS</p>
                   </div>
                 </div>
               ))}
@@ -135,36 +160,48 @@ export default function Dashboard() {
                   acc[cat] = (acc[cat] || 0) + item.quantity;
                   return acc;
                 }, {} as Record<string, number>)).filter(([_, total]) => total <= 3).length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  All items are well stocked!
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full mb-3">
+                        <Package className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="font-medium text-lg">All items are well stocked!</h3>
+                    <p className="text-muted-foreground text-sm max-w-xs mt-1">
+                        No items or categories are currently below the low stock threshold.
+                    </p>
+                </div>
               ) : (
-                lowStockItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">Category: {item.category}</p>
+                <div className="grid gap-3">
+                    {lowStockItems.map((item) => (
+                    <div
+                        key={item.id}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-2 h-12 rounded-full ${item.status === 'out-of-stock' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                            <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">Category: {item.category}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-sm font-bold">{item.quantity}</p>
+                            <p className="text-xs text-muted-foreground">units</p>
+                        </div>
+                        <Badge
+                            variant={
+                            item.status === "out-of-stock"
+                                ? "destructive"
+                                : "outline"
+                            }
+                            className={item.status === 'low-stock' ? 'border-orange-500 text-orange-500' : ''}
+                        >
+                            {item.status === "out-of-stock" ? "Out of Stock" : "Low Stock"}
+                        </Badge>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">{item.quantity}</p>
-                        <p className="text-xs text-muted-foreground">units</p>
-                      </div>
-                      <Badge
-                        variant={
-                          item.status === "out-of-stock"
-                            ? "destructive"
-                            : "warning"
-                        }
-                      >
-                        {item.status === "out-of-stock" ? "Out" : "Low"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
+                    ))}
+                </div>
               )}
             </div>
           </CardContent>
@@ -172,29 +209,39 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Recent Activity
+            </CardTitle>
+            <CardDescription>Latest inventory updates</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {allItems.slice(0, 5).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30"
+                  className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Package className="h-5 w-5 text-primary" />
+                  <div className="mt-1 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <ArrowUpRight className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Updated{" "}
-                      {item.lastUpdated
-                        ? new Date(item.lastUpdated).toLocaleDateString()
-                        : "N/A"}
-                    </p>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">{item.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{item.category}</span>
+                        <span>•</span>
+                        <span>
+                            Updated {item.lastUpdated
+                                ? new Date(item.lastUpdated).toLocaleDateString()
+                                : "N/A"}
+                        </span>
+                    </div>
                   </div>
                 </div>
               ))}
+              <Button variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => navigate('/inventory')}>
+                  View All Activity
+              </Button>
             </div>
           </CardContent>
         </Card>
