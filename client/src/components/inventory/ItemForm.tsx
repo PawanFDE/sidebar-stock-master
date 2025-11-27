@@ -310,19 +310,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       </Dialog>
 
       <Card className="border-border/50 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-b">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-md">
-            <Package className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <CardTitle className="text-xl font-bold">{item ? 'Edit Item' : 'Add New Item'}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {item ? 'Update inventory item details' : 'Add a new item to your inventory'}
-            </p>
-          </div>
-        </div>
-      </CardHeader>
+      
       <CardContent className="pt-6">
         {!item && (
           <div 

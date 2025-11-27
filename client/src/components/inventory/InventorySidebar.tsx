@@ -1,39 +1,39 @@
 // View Component - Sidebar Navigation
 import { NavLink } from "@/components/NavLink";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/controllers/useAuth";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import {
-    Activity,
-    ArrowRightLeft,
-    Clock,
-    FolderOpen,
-    LayoutDashboard,
-    LogOut,
-    Package,
-    User,
-    UserPlus
+  Activity,
+  ArrowRightLeft,
+  Clock,
+  FolderOpen,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  User,
+  UserPlus
 } from "lucide-react";
 
 const navigationItems = [
@@ -76,17 +76,42 @@ export function InventorySidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarContent className="flex flex-col h-full">
         {/* Logo/Brand Section */}
-        <div className={`px-4 py-6 border-b border-sidebar-border ${!open ? "px-2" : ""}`}>
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center rounded-lg ${open ? "w-12 h-12" : "w-8 h-8"} transition-all`}>
-              <img src="/logo.png" alt="Logo" className={`object-contain ${open ? "h-10 w-10" : "h-6 w-6"}`} />
+        <div className={`relative border-b border-sidebar-border/50 bg-gradient-to-br from-sidebar-accent/30 to-transparent transition-all duration-300 ${!open ? "px-3 py-4" : "px-4 py-6"}`}>
+          {/* Decorative gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className={`relative flex items-center gap-3 group ${!open ? "justify-center" : ""}`}>
+            {/* Logo Container with subtle enhancements */}
+            <div className={`
+              flex items-center justify-center rounded-xl
+              bg-sidebar-accent/40
+              shadow-md
+              ${open ? "w-12 h-12" : "w-11 h-11"}
+              transition-all duration-300
+              group-hover:shadow-lg
+              group-hover:scale-105
+              relative overflow-hidden
+            `}>
+              
+              <img 
+                src="/logo.png" 
+                alt="Fardar Express Logo" 
+                className={`object-contain relative z-10 ${open ? "h-10 w-10" : "h-9 w-9"} transition-all duration-300`} 
+              />
             </div>
+            
+            {/* Brand Text */}
             {open && (
-              <div className="flex flex-col">
-                <h2 className="font-bold text-base text-sidebar-foreground leading-tight">
+              <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
+                <h2 className="font-bold text-lg text-sidebar-foreground leading-tight tracking-tight bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text">
                   Fardar Express
                 </h2>
-                <p className="text-xs text-muted-foreground">Domestic</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    Domestic
+                  </p>
+                </div>
               </div>
             )}
           </div>
