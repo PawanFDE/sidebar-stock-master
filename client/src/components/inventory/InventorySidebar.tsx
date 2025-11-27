@@ -103,15 +103,10 @@ export function InventorySidebar() {
             {/* Brand Text */}
             {open && (
               <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-                <h2 className="font-bold text-lg text-sidebar-foreground leading-tight tracking-tight bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text">
+                <h2 className="font-bold text-lg text-sidebar-foreground leading-tight tracking-tight bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text ">
                   Fardar Express
                 </h2>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                    Domestic
-                  </p>
-                </div>
+                <span className=" text-center">Domestic</span>
               </div>
             )}
           </div>
