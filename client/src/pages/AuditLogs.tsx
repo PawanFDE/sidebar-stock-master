@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -23,7 +23,7 @@ interface AuditLog {
   itemId: string;
   itemName: string;
   itemCategory: string;
-  type: 'in' | 'out' | 'return' | 'transfer';
+  type: 'in' | 'out' | 'return' | 'transfer' | 'confirmation';
   quantity: number;
   branch?: string;
   reason?: string;
@@ -35,6 +35,8 @@ interface AuditLog {
   createdAt: string;
 }
 
+
+
 export default function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +44,7 @@ export default function AuditLogs() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: logs, isLoading } = useQuery({
+  const { data: logs, isLoading: isLoadingLogs } = useQuery({
     queryKey: ['auditLogs'],
     queryFn: async () => {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -54,6 +56,8 @@ export default function AuditLogs() {
       return response.data as AuditLog[];
     },
   });
+
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -105,7 +109,7 @@ export default function AuditLogs() {
     setCurrentPage(1); // Reset to first page on search
   };
 
-  if (isLoading) {
+  if (isLoadingLogs) {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -121,14 +125,13 @@ export default function AuditLogs() {
           Audit Logs
         </h1>
         <p className="text-muted-foreground">
-          Track all inventory activities performed by admins and sub-admins.
+          Track all inventory activities and manage pending confirmations.
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Activity History</CardTitle>
             <div className="relative w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -174,11 +177,15 @@ export default function AuditLogs() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={
-                          log.type === 'in' ? 'default' :
-                          log.type === 'out' ? 'destructive' :
-                          log.type === 'transfer' ? 'secondary' : 'outline'
-                        }>
+                        <Badge 
+                          variant={
+                            log.type === 'in' ? 'default' :
+                            log.type === 'out' ? 'destructive' :
+                            log.type === 'transfer' ? 'secondary' : 
+                            log.type === 'confirmation' ? 'outline' : 'outline'
+                          }
+                          className={log.type === 'confirmation' ? 'border-blue-500 text-blue-500' : ''}
+                        >
                           {log.type.toUpperCase()}
                         </Badge>
                       </TableCell>
@@ -190,9 +197,11 @@ export default function AuditLogs() {
                       </TableCell>
                       <TableCell>
                         <span className={`font-bold ${
-                          log.type === 'in' || log.type === 'return' ? 'text-green-600' : 'text-red-600'
+                          log.type === 'in' || log.type === 'return' ? 'text-green-600' : 
+                          log.type === 'confirmation' ? 'text-blue-600' : 'text-red-600'
                         }`}>
-                          {log.type === 'in' || log.type === 'return' ? '+' : '-'}{log.quantity}
+                          {log.type === 'in' || log.type === 'return' ? '+' : 
+                           log.type === 'confirmation' ? '' : '-'}{log.quantity}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -251,8 +260,6 @@ export default function AuditLogs() {
               </Button>
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  // Logic to show a window of pages around current page could be added here
-                  // For simplicity, showing first 5 or simple logic
                   let pageNum = i + 1;
                   if (totalPages > 5) {
                     if (currentPage > 3) {

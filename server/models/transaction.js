@@ -16,7 +16,7 @@ const transactionSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['in', 'out', 'return', 'transfer'],
+      enum: ['in', 'out', 'return', 'transfer', 'confirmation'],
     },
     quantity: {
       type: Number,

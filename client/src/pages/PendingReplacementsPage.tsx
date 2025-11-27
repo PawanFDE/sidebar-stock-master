@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,15 +129,33 @@ export default function PendingReplacementsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                          onClick={() => handleConfirm(item._id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Confirm
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Confirm
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirm Replacement</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to confirm this replacement for <span className="font-medium text-foreground">{item.itemName}</span>?
+                                This action will mark the replacement as completed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleConfirm(item._id)}>
+                                Confirm
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}

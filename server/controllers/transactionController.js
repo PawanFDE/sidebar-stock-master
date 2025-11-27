@@ -420,6 +420,22 @@ const confirmPendingReplacement = async (req, res) => {
       return res.status(404).json({ message: 'Pending replacement not found' });
     }
 
+    // Fetch item to get category
+    const item = await InventoryItem.findById(pending.itemId);
+
+    // Create a confirmation transaction log
+    await Transaction.create({
+      itemId: pending.itemId,
+      itemName: pending.itemName,
+      itemCategory: item ? item.category : 'Replacement',
+      type: 'confirmation',
+      quantity: 1,
+      branch: pending.branch,
+      itemTrackingId: pending.itemTrackingId,
+      reason: `Confirmed replacement: ${pending.reason}`,
+      performedBy: req.user._id
+    });
+
     // Remove from pending list (delete the document)
     await pending.deleteOne();
 
