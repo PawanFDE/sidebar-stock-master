@@ -169,41 +169,55 @@ export function InventorySidebar() {
         </SidebarGroup>
 
         {/* User Info + Logout Section */}
-        <SidebarGroup className="mt-auto border-t border-sidebar-border">
-          <SidebarGroupContent className="p-3">
-            {/* User Info Card */}
-            <div
-              className={`flex items-center gap-3 p-3 mb-2 rounded-lg bg-sidebar-accent/50 transition-all ${
-                !open ? "justify-center p-2" : ""
-              }`}
-            >
-              <div className={`flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold ${open ? "w-9 h-9" : "w-8 h-8"} transition-all`}>
-                {open ? (
-                  <span className="text-sm">{getInitials(userInfo?.username)}</span>
-                ) : (
-                  <User className="h-4 w-4" />
-                )}
-              </div>
-              {open && (
-                <div className="flex flex-col min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-sidebar-foreground truncate">
-                    {userInfo?.username}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {userInfo?.role}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Logout Button */}
+        <SidebarGroup className="mt-auto border-t border-sidebar-border bg-sidebar/50">
+          <SidebarGroupContent className="p-2">
             <SidebarMenu>
+              {/* User Profile */}
+              <SidebarMenuItem>
+                <div className={`flex items-center gap-3 p-2 rounded-lg transition-all ${!open ? "justify-center" : ""}`}>
+                  <div className={`
+                    flex items-center justify-center rounded-full 
+                    bg-gradient-to-br from-blue-600 to-indigo-600 
+                    text-white font-bold shadow-sm 
+                    ${open ? "w-9 h-9" : "w-8 h-8"} 
+                    ring-2 ring-background
+                  `}>
+                    {open ? (
+                      <span className="text-xs">{getInitials(userInfo?.username)}</span>
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
+                  </div>
+                  {open && (
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-bold text-sidebar-foreground truncate">
+                        {userInfo?.username}
+                      </span>
+                      <span className="text-xs text-muted-foreground font-medium capitalize">
+                        {userInfo?.role}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </SidebarMenuItem>
+
+              <div className="my-1 border-t border-sidebar-border/50" />
+
+              {/* Logout Button */}
               <SidebarMenuItem>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <SidebarMenuButton className="w-full hover:bg-red-500/10 hover:text-red-600 transition-all duration-200 group">
+                    <SidebarMenuButton 
+                      className={`
+                        w-full flex items-center gap-2 
+                        text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 
+                        transition-all duration-200 group
+                        ${!open ? "justify-center p-2" : "px-3 py-2"}
+                      `}
+                      tooltip={!open ? "Log Out" : undefined}
+                    >
                       <LogOut className="h-4 w-4 transition-transform group-hover:scale-110" />
-                      <span className="text-sm font-medium">Logout</span>
+                      {open && <span className="text-sm font-medium">Log Out</span>}
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -217,7 +231,7 @@ export function InventorySidebar() {
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={logout}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         Logout
                       </AlertDialogAction>
