@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Table,
     TableBody,
@@ -38,11 +40,39 @@ export default function PendingReplacementsPage() {
   const { getPendingReplacements, confirmPendingReplacement } = useInventoryController();
   const [replacements, setReplacements] = useState<PendingReplacement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [replacementAssetNumber, setReplacementAssetNumber] = useState("");
+  const [replacementSerialNumber, setReplacementSerialNumber] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleConfirm = async (id: string) => {
-    await confirmPendingReplacement(id);
+  const handleConfirm = async () => {
+    if (!selectedItemId) return;
+    
+    const replacementDetails: {
+      replacementAssetNumber?: string;
+      replacementSerialNumber?: string;
+    } = {};
+    
+    if (replacementAssetNumber.trim()) {
+      replacementDetails.replacementAssetNumber = replacementAssetNumber.trim();
+    }
+    if (replacementSerialNumber.trim()) {
+      replacementDetails.replacementSerialNumber = replacementSerialNumber.trim();
+    }
+    
+    await confirmPendingReplacement(
+      selectedItemId, 
+      Object.keys(replacementDetails).length > 0 ? replacementDetails : undefined
+    );
+    
     const data = await getPendingReplacements();
     setReplacements(data);
+    
+    // Reset form
+    setSelectedItemId(null);
+    setReplacementAssetNumber("");
+    setReplacementSerialNumber("");
+    setDialogOpen(false);
   };
 
   useEffect(() => {
@@ -129,29 +159,83 @@ export default function PendingReplacementsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <AlertDialog>
+                        <AlertDialog 
+                          open={dialogOpen && selectedItemId === item._id}
+                          onOpenChange={(open) => {
+                            setDialogOpen(open);
+                            if (open) {
+                              setSelectedItemId(item._id);
+                            } else {
+                              setSelectedItemId(null);
+                              setReplacementAssetNumber("");
+                              setReplacementSerialNumber("");
+                            }
+                          }}
+                        >
                           <AlertDialogTrigger asChild>
                             <Button 
                               size="sm" 
                               variant="outline" 
                               className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                              onClick={() => {
+                                setSelectedItemId(item._id);
+                                setDialogOpen(true);
+                              }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Confirm
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="max-w-md">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Confirm Replacement</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to confirm this replacement for <span className="font-medium text-foreground">{item.itemName}</span>?
-                                This action will mark the replacement as completed.
+                                Confirming replacement for <span className="font-medium text-foreground">{item.itemName}</span> at <span className="font-medium text-foreground">{item.branch}</span>.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
+                            
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="assetNumber" className="text-sm font-medium">
+                                  Which Asset Number is being replaced? (Optional)
+                                </Label>
+                                <Input
+                                  id="assetNumber"
+                                  placeholder="Enter asset number"
+                                  value={replacementAssetNumber}
+                                  onChange={(e) => setReplacementAssetNumber(e.target.value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="serialNumber" className="text-sm font-medium">
+                                  Which Serial Number is being replaced? (Optional)
+                                </Label>
+                                <Input
+                                  id="serialNumber"
+                                  placeholder="Enter serial number"
+                                  value={replacementSerialNumber}
+                                  onChange={(e) => setReplacementSerialNumber(e.target.value)}
+                                  className="w-full"
+                                />
+                              </div>
+                              
+                              <p className="text-xs text-muted-foreground">
+                                Provide at least one identifier to track which equipment is being replaced.
+                              </p>
+                            </div>
+                            
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleConfirm(item._id)}>
-                                Confirm
+                              <AlertDialogCancel onClick={() => {
+                                setReplacementAssetNumber("");
+                                setReplacementSerialNumber("");
+                                setSelectedItemId(null);
+                              }}>
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction onClick={handleConfirm}>
+                                Confirm Replacement
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

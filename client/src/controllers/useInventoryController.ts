@@ -369,11 +369,17 @@ export const useInventoryController = () => {
   }, []);
   
   // Confirm pending replacement
-  const confirmPendingReplacement = useCallback(async (id: string) => {
+  const confirmPendingReplacement = useCallback(async (
+    id: string, 
+    replacementDetails?: { 
+      replacementAssetNumber?: string; 
+      replacementSerialNumber?: string; 
+    }
+  ) => {
     setLoading(true);
     setError(null);
     try {
-      await api(`/transactions/pending-replacements/${id}/confirm`, 'PUT'); // PUT /api/transactions/pending-replacements/:id/confirm
+      await api(`/transactions/pending-replacements/${id}/confirm`, 'PUT', replacementDetails); // PUT /api/transactions/pending-replacements/:id/confirm
       toast({
         title: 'Replacement Confirmed',
         description: 'The pending replacement has been confirmed and removed from the list.',

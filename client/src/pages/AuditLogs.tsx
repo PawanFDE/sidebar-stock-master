@@ -28,6 +28,7 @@ interface AuditLog {
   branch?: string;
   reason?: string;
   serialNumber?: string;
+  itemTrackingId?: string;
   performedBy?: {
     username: string;
     role: string;
@@ -95,7 +96,8 @@ export default function AuditLogs() {
     log.performedBy?.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (log.branch && log.branch.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (log.serialNumber && log.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+    (log.serialNumber && log.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (log.itemTrackingId && log.itemTrackingId.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Pagination Logic
@@ -210,6 +212,12 @@ export default function AuditLogs() {
                             <div className="flex items-center gap-1">
                               <span className="text-muted-foreground font-medium">Branch:</span>
                               {log.branch}
+                            </div>
+                          )}
+                          {log.itemTrackingId && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground font-medium">ID:</span>
+                              <span className="font-mono text-xs">{log.itemTrackingId}</span>
                             </div>
                           )}
                           {log.serialNumber && (

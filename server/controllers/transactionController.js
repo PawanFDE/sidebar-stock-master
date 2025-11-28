@@ -420,8 +420,24 @@ const confirmPendingReplacement = async (req, res) => {
       return res.status(404).json({ message: 'Pending replacement not found' });
     }
 
+    // Get replacement details from request body
+    const { replacementAssetNumber, replacementSerialNumber } = req.body;
+
     // Fetch item to get category
     const item = await InventoryItem.findById(pending.itemId);
+
+    // Build detailed reason with replacement information
+    let confirmationReason = `Confirmed replacement: ${pending.reason}`;
+    if (replacementAssetNumber || replacementSerialNumber) {
+      confirmationReason += ' | Replaced: ';
+      if (replacementAssetNumber) {
+        confirmationReason += `Asset #${replacementAssetNumber}`;
+      }
+      if (replacementSerialNumber) {
+        if (replacementAssetNumber) confirmationReason += ', ';
+        confirmationReason += `S/N: ${replacementSerialNumber}`;
+      }
+    }
 
     // Create a confirmation transaction log
     await Transaction.create({
@@ -432,7 +448,7 @@ const confirmPendingReplacement = async (req, res) => {
       quantity: 1,
       branch: pending.branch,
       itemTrackingId: pending.itemTrackingId,
-      reason: `Confirmed replacement: ${pending.reason}`,
+      reason: confirmationReason,
       performedBy: req.user._id
     });
 
