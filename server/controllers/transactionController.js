@@ -426,6 +426,11 @@ const confirmPendingReplacement = async (req, res) => {
     // Fetch item to get category
     const item = await InventoryItem.findById(pending.itemId);
 
+    // Fetch original transaction to get the NEW serial/asset number
+    const originalTransaction = await Transaction.findById(pending.transactionId);
+    const newSerialNumber = originalTransaction ? originalTransaction.serialNumber : null;
+    const newAssetNumber = originalTransaction ? originalTransaction.assetNumber : null;
+
     // Build detailed reason with replacement information
     let confirmationReason = `Confirmed replacement: ${pending.reason}`;
     if (replacementAssetNumber || replacementSerialNumber) {
@@ -449,6 +454,10 @@ const confirmPendingReplacement = async (req, res) => {
       branch: pending.branch,
       itemTrackingId: pending.itemTrackingId,
       reason: confirmationReason,
+      assetNumber: newAssetNumber,
+      serialNumber: newSerialNumber,
+      replacedAssetNumber: replacementAssetNumber,
+      replacedSerialNumber: replacementSerialNumber,
       performedBy: req.user._id
     });
 
@@ -456,6 +465,20 @@ const confirmPendingReplacement = async (req, res) => {
     await pending.deleteOne();
 
     res.status(200).json({ message: 'Pending replacement confirmed and removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all confirmed replacements
+// @route   GET /api/transactions/confirmed-replacements
+// @access  Public
+const getConfirmedReplacements = async (req, res) => {
+  try {
+    const confirmed = await Transaction.find({ type: 'confirmation' })
+      .populate('performedBy', 'username')
+      .sort({ createdAt: -1 });
+    res.status(200).json(confirmed);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -472,4 +495,5 @@ module.exports = {
   deleteAuditLog,
   getPendingReplacements,
   confirmPendingReplacement,
+  getConfirmedReplacements,
 };

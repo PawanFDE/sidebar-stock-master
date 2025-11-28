@@ -1,39 +1,40 @@
 // View Component - Sidebar Navigation
 import { NavLink } from "@/components/NavLink";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
+    Sidebar,
+    SidebarContent,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/controllers/useAuth";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import {
-  Activity,
-  ArrowRightLeft,
-  Clock,
-  FolderOpen,
-  LayoutDashboard,
-  LogOut,
-  Package,
-  User,
-  UserPlus
+    Activity,
+    ArrowRightLeft,
+    ClipboardList,
+    Clock,
+    FolderOpen,
+    LayoutDashboard,
+    LogOut,
+    Package,
+    User,
+    UserPlus
 } from "lucide-react";
 
 const navigationItems = [
@@ -48,6 +49,11 @@ const navigationItems = [
     title: "Pending Replacements",
     url: "/pending-replacements",
     icon: Clock,
+  },
+  {
+    title: "Confirmed Replacements",
+    url: "/confirmed-replacements",
+    icon: ClipboardList,
   },
   { title: "Categories", url: "/categories", icon: FolderOpen },
 ];

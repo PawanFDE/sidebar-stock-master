@@ -398,6 +398,26 @@ export const useInventoryController = () => {
       setLoading(false);
     }
   }, [getPendingReplacements]);
+  
+  // Get all confirmed replacements
+  const getConfirmedReplacements = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const confirmedReplacements = await api('/transactions/confirmed-replacements'); // GET /api/transactions/confirmed-replacements
+      return confirmedReplacements;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Error fetching confirmed replacements',
+        description: err.message,
+        variant: 'destructive',
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     items: filteredItems,
@@ -417,6 +437,7 @@ export const useInventoryController = () => {
     getTransferredItems,
     getPendingReplacements,
     confirmPendingReplacement,
+    getConfirmedReplacements,
     loading,
     error,
   };

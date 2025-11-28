@@ -12,6 +12,7 @@ const {
   deleteAuditLog,
   getPendingReplacements,
   confirmPendingReplacement,
+  getConfirmedReplacements,
 } = require('../controllers/transactionController');
 
 router.route('/').post(protect, createTransaction);
@@ -20,6 +21,7 @@ router.route('/branches').get(protect, getBranches);
 router.route('/transferred-items').get(protect, getAllTransferredItems);
 router.route('/pending-replacements').get(protect, getPendingReplacements);
 router.route('/pending-replacements/:id/confirm').put(protect, confirmPendingReplacement);
+router.route('/confirmed-replacements').get(protect, getConfirmedReplacements);
 router.route('/audit-logs').get(protect, superadmin, getAuditLogs);
 router.route('/audit-logs/:id').delete(protect, superadmin, deleteAuditLog);
 router.route('/branch/:branchName').get(protect, getItemsByBranch);

@@ -7,6 +7,7 @@ import AddItem from "./pages/AddItem";
 import { AddSubAdminPage } from "./pages/AddSubAdminPage";
 import AuditLogs from "./pages/AuditLogs";
 import Categories from "./pages/Categories";
+import ConfirmedReplacementsPage from "./pages/ConfirmedReplacementsPage";
 import Dashboard from "./pages/Dashboard";
 import InventoryList from "./pages/InventoryList";
 import LoginPage from "./pages/LoginPage";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/categories" element={<Categories />} />
             <Route path="/transferred-items" element={<TransferredItemsList />} />
             <Route path="/pending-replacements" element={<PendingReplacementsPage />} />
+            <Route path="/confirmed-replacements" element={<ConfirmedReplacementsPage />} />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
             <Route path="/add-subadmin" element={<AddSubAdminPage />} />

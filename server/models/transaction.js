@@ -32,10 +32,16 @@ const transactionSchema = new mongoose.Schema(
     assetNumber: {
       type: String,
     },
+    replacedAssetNumber: {
+      type: String,
+    },
     model: {
       type: String,
     },
     serialNumber: {
+      type: String,
+    },
+    replacedSerialNumber: {
       type: String,
     },
     itemTrackingId: {
