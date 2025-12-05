@@ -37,7 +37,7 @@ import { useState } from "react";
 interface InventoryTableProps {
   items: InventoryItem[];
   onEdit: (item: InventoryItem) => void;
-  onDelete: (id: string, serialNumber?: string | string[], options?: { silent?: boolean }) => void;
+  onDelete: (id: string, serialNumber?: string | string[], options?: { silent?: boolean }) => Promise<void>;
   onTransaction: (item: InventoryItem) => void;
   onView: (item: InventoryItem) => void;
   onTransferSerial?: (item: InventoryItem, serialNumber: string) => void;
@@ -161,20 +161,26 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
 
     let deletedCount = 0;
 
+    const deletePromises: Promise<void>[] = [];
+
     // Process full deletes
     for (const id of fullDeletes) {
-        await onDelete(id, undefined, { silent: true });
-        deletedCount++;
+        deletePromises.push(onDelete(id, undefined, { silent: true }).then(() => {
+            deletedCount++;
+        }).catch(() => {}));
     }
 
     // Process partial deletes (specific serials)
     for (const [id, serials] of itemsToDelete) {
         // Only delete specific serials if the item wasn't already fully deleted
         if (!fullDeletes.has(id)) {
-            await onDelete(id, serials, { silent: true });
-            deletedCount += serials.length;
+            deletePromises.push(onDelete(id, serials, { silent: true }).then(() => {
+                deletedCount += serials.length;
+            }).catch(() => {}));
         }
     }
+
+    await Promise.all(deletePromises);
 
     toast({
       title: 'Items deleted',
@@ -235,33 +241,52 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
     <div className="space-y-4">
       {/* Bulk Actions Bar */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
-          <div className="text-sm font-medium">
-            {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border-2 border-primary/30 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              {selectedItems.size}
+            </div>
+            <div>
+              <div className="text-sm font-semibold">
+                {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Ready for bulk action
+              </div>
+            </div>
           </div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Multiple Items?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''}? 
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleBulkDelete}>
-                  Delete {selectedItems.size} Item{selectedItems.size > 1 ? 's' : ''}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSelectedItems(new Set())}
+            >
+              Clear Selection
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Multiple Items?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''}? 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete {selectedItems.size} Item{selectedItems.size > 1 ? 's' : ''}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       )}
 
@@ -283,7 +308,7 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
               <TableHead>Category</TableHead>
               <TableHead>Quantity</TableHead>
               <TableHead>Model</TableHead>
-              <TableHead>Date Added</TableHead>
+              <TableHead>Purchase Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -328,7 +353,11 @@ export function InventoryTable({ items, onEdit, onDelete, onTransaction, onView,
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{item.model || 'N/A'}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { 
+                    {item.purchaseDate ? new Date(item.purchaseDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    }) : item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'short', 
                       day: 'numeric' 

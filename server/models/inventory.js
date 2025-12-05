@@ -6,7 +6,6 @@ const inventoryItemSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-
     category: {
       type: String,
       required: true,
@@ -14,6 +13,14 @@ const inventoryItemSchema = mongoose.Schema(
     quantity: {
       type: Number,
       required: true,
+      default: 0,
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+    totalPrice: {
+      type: Number,
       default: 0,
     },
     maxStock: {
@@ -33,6 +40,9 @@ const inventoryItemSchema = mongoose.Schema(
       type: String,
     },
     warrantyExpiryDate: {
+      type: Date,
+    },
+    purchaseDate: {
       type: Date,
     },
     location: {

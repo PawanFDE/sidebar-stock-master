@@ -47,7 +47,8 @@ async function checkDuplicateSerialNumbers(serialNumber, excludeItemId = null) {
     const existingSerials = item.serialNumber.split(',').map(s => s.trim());
     
     for (const newSerial of newSerials) {
-      if (existingSerials.includes(newSerial)) {
+      // Case-insensitive comparison
+      if (existingSerials.some(existing => existing.toLowerCase() === newSerial.toLowerCase())) {
         return { serial: newSerial, existingItemName: item.name };
       }
     }
@@ -83,11 +84,13 @@ const getInventoryItemById = async (req, res) => {
   }
 };
 
+
+
 // @desc    Create an inventory item
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description, allowDuplicates } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
 
   try {
     // Check for duplicate serial numbers
@@ -123,6 +126,7 @@ const createInventoryItem = async (req, res) => {
             serialNumber: sn,
             warranty,
             warrantyExpiryDate,
+            purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
             location,
             status: 'in-stock',
             description,
@@ -151,6 +155,7 @@ const createInventoryItem = async (req, res) => {
           serialNumber: serialNumbers[0],
           warranty,
           warrantyExpiryDate,
+          purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
           location,
           status: 'in-stock',
           description,
@@ -174,6 +179,7 @@ const createInventoryItem = async (req, res) => {
         serialNumber: '',
         warranty,
         warrantyExpiryDate,
+        purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
         location,
         status: quantity === 0 ? 'out-of-stock' : 'in-stock',
         description,
@@ -194,7 +200,7 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, location, description, allowDuplicates } = req.body;
+  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
@@ -223,6 +229,10 @@ const updateInventoryItem = async (req, res) => {
         item.warranty = warranty;
         // Recalculate expiry if warranty changes. Base it on original creation date to be consistent with "purchase date" concept
         item.warrantyExpiryDate = calculateWarrantyExpiry(warranty, item.createdAt);
+      }
+      
+      if (purchaseDate !== undefined) {
+        item.purchaseDate = purchaseDate ? new Date(purchaseDate) : null;
       }
       
       item.location = location !== undefined ? location : item.location;

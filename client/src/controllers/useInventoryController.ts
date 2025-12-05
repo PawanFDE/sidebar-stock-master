@@ -148,14 +148,18 @@ export const useInventoryController = () => {
   }, [fetchItemsAndCategories]);
 
   // Update item
-  const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+  const updateItem = useCallback(async (id: string, updates: Partial<InventoryItem>, options?: { silent?: boolean }) => {
     try {
       const updatedItem = await api(`/inventory/${id}`, 'PUT', updates); // PUT /api/inventory/:id
       setItems(prev => prev.map(item => (item.id === id ? updatedItem : item)));
-      toast({
-        title: 'Item updated',
-        description: 'Inventory item has been updated successfully.',
-      });
+      setItems(prev => prev.map(item => (item.id === id ? updatedItem : item)));
+      
+      if (!options?.silent) {
+        toast({
+          title: 'Item updated',
+          description: 'Inventory item has been updated successfully.',
+        });
+      }
       // Re-fetch all data to update categories and ensure data consistency
       fetchItemsAndCategories();
       return updatedItem;
@@ -206,7 +210,7 @@ export const useInventoryController = () => {
             // We call updateItem here. Note: updateItem will trigger its own toast and state update.
             // To avoid double toasts or state conflicts, we can call the API directly here or reuse updateItem.
             // Reusing updateItem is safer for consistency.
-            await updateItem(id, updates);
+            await updateItem(id, updates, options);
             return; 
         }
       } else {
@@ -231,6 +235,7 @@ export const useInventoryController = () => {
         description: err.message,
         variant: 'destructive',
       });
+      throw err;
     }
   }, [items, fetchItemsAndCategories, updateItem]);
 

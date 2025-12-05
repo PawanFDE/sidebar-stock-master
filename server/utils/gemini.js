@@ -29,6 +29,8 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
       - name: The item/product name (be VERY SHORT and include the item BRAND. Format: "Brand - Short Name")
       - category: ${categoryInstructions}
       - quantity: The quantity purchased (look for "Qty", "Quantity", or count. Default to 1 if not found)
+      - price: The unit price of the item (look for "Unit Price", "Price", "Rate", "Price per unit"). Return as a number (e.g., 1200.50). If currency symbol exists, remove it.
+      - totalPrice: The total price for this item (look for "Total", "Amount", "Line Total", "Sub Total" for this specific item). This should be price × quantity. Return as a number. If currency symbol exists, remove it.
       - supplier: The supplier/vendor/company name (look at the top of the invoice - this will be the same for all items)
       - model: Model number, SKU, or product code (if visible)
       - serialNumber: **CRITICAL - READ CAREFULLY FOR SERIAL NUMBERS**
@@ -70,6 +72,8 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
       8. **EXTRACT ALL SERIAL NUMBER CODES** - If you see multiple codes like SC4157310, SC4157308, include them all
       9. For unclear or missing fields, use reasonable defaults:
          - quantity: 1
+         - price: 0
+         - totalPrice: 0 (or price × quantity if price is available)
          - location: ""
          - serialNumber: "" (only if truly not found after thorough search in all orientations)
       10. Return ONLY valid JSON array - no markdown, no explanations, no extra text
@@ -81,6 +85,8 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
           "name": "first item name",
           "category": "category from available list",
           "quantity": 1,
+          "price": 1200.00,
+          "totalPrice": 1200.00,
           "supplier": "supplier name",
           "model": "model/sku",
           "serialNumber": "SC4157310",
@@ -91,7 +97,9 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
         {
           "name": "second item name",
           "category": "category from available list",
-          "quantity": 1,
+          "quantity": 2,
+          "price": 50.00,
+          "totalPrice": 100.00,
           "supplier": "supplier name",
           "model": "model/sku2",
           "serialNumber": "SC4157308, SC4157309",
@@ -130,6 +138,8 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
         name: "",
         category: "General",
         quantity: 1,
+        price: 0,
+        totalPrice: 0,
         supplier: "",
         model: "",
         serialNumber: "",
@@ -148,6 +158,8 @@ async function extractInvoiceData(fileBuffer, mimeType, availableCategories = ""
         name: item.name || "",
         category: item.category || "General",
         quantity: item.quantity || 1,
+        price: item.price || 0,
+        totalPrice: item.totalPrice || (item.price || 0) * (item.quantity || 1),
         supplier: item.supplier || "",
         model: item.model || "",
         serialNumber: item.serialNumber || "",

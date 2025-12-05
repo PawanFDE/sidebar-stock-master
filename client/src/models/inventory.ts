@@ -5,12 +5,15 @@ export interface InventoryItem {
   name: string;
   category: string;
   quantity: number;
+  price?: number;
+  totalPrice?: number;
   maxStock?: number;
   supplier: string;
   model?: string;
   serialNumber?: string;
   warranty?: string;
   warrantyExpiryDate?: Date;
+  purchaseDate?: Date;
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
   lastUpdated: Date;

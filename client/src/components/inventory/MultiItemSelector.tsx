@@ -5,17 +5,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Package, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ExtractedItem {
   name: string;
@@ -25,6 +25,7 @@ interface ExtractedItem {
   model?: string;
   serialNumber?: string;
   warranty?: string;
+  purchaseDate?: string;
   location: string;
   description?: string;
 }
@@ -307,6 +308,17 @@ export function MultiItemSelector({ items, categories, existingItems = [], onAdd
                               value={item.warranty || ''}
                               onChange={(e) => handleFieldChange(index, 'warranty', e.target.value)}
                               placeholder="e.g., 1 Year"
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor={`purchaseDate-${index}`} className="text-xs">Purchase Date</Label>
+                            <Input
+                              id={`purchaseDate-${index}`}
+                              type="date"
+                              value={item.purchaseDate || ''}
+                              onChange={(e) => handleFieldChange(index, 'purchaseDate', e.target.value)}
                               className="h-9"
                             />
                           </div>

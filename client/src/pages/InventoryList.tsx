@@ -180,6 +180,14 @@ export default function InventoryList() {
                     </p>
                   )}
                 </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Purchase Date</p>
+                  <p className="text-base">
+                    {viewingItem.purchaseDate 
+                      ? new Date(viewingItem.purchaseDate).toLocaleDateString() 
+                      : 'N/A'}
+                  </p>
+                </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Location</p>
                   <p className="text-base">{viewingItem.location}</p>

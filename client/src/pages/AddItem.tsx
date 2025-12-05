@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 export default function AddItem() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { categories, items, addItem } = useInventoryController();
+  const { categories, allItems, addItem } = useInventoryController();
 
   const handleSubmit = async (item: Omit<InventoryItem, 'id' | 'status' | 'lastUpdated'>) => {
     try {
@@ -63,7 +63,7 @@ export default function AddItem() {
 
       <ItemForm
         categories={categories}
-        existingItems={items}
+        existingItems={allItems}
         onSubmit={handleSubmit}
         onSubmitMultiple={handleSubmitMultiple}
         onCancel={() => navigate('/inventory')}
