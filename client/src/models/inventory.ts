@@ -13,7 +13,7 @@ export interface InventoryItem {
   serialNumber?: string;
   warranty?: string;
   warrantyExpiryDate?: Date;
-  purchaseDate?: Date;
+  purchaseDate: Date;
   location: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
   lastUpdated: Date;

@@ -58,8 +58,8 @@ export function MultiItemSelector({ items, categories, existingItems = [], onAdd
       for (const newSerial of serials) {
         const duplicateItem = existingItems.find(existing => {
            if (!existing.serialNumber) return false;
-           const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
-           return existingSerials.includes(newSerial);
+           const existingSerials = existing.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+           return existingSerials.some(existingSerial => existingSerial.toLowerCase() === newSerial.toLowerCase());
         });
 
         if (duplicateItem) {

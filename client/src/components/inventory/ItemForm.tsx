@@ -2,20 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
@@ -100,9 +100,15 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           
           if (!existing.serialNumber) return false;
           
-          const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
+          const existingSerials = existing.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+          
+          // Filter out serials that are in the current form (to avoid self-comparison)
+          const existingSerialsFiltered = existingSerials.filter(existingSerial => 
+            !serials.some(currentSerial => currentSerial.toLowerCase() === existingSerial.toLowerCase())
+          );
+          
           // Case-insensitive comparison
-          return existingSerials.some(existing => existing.toLowerCase() === newSerial.toLowerCase());
+          return existingSerialsFiltered.some(existingSerial => existingSerial.toLowerCase() === newSerial.toLowerCase());
         });
 
         if (duplicateItem) {
@@ -134,9 +140,15 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           
           if (!existing.serialNumber) return false;
           
-          const existingSerials = existing.serialNumber.split(',').map(s => s.trim());
+          const existingSerials = existing.serialNumber.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+          
+          // Filter out serials that are in the current form (to avoid self-comparison)
+          const existingSerialsFiltered = existingSerials.filter(existingSerial => 
+            !serialNumbers.some(currentSerial => currentSerial.toLowerCase() === existingSerial.toLowerCase())
+          );
+          
           // Case-insensitive comparison
-          return existingSerials.some(existing => existing.toLowerCase() === newSerial.toLowerCase());
+          return existingSerialsFiltered.some(existingSerial => existingSerial.toLowerCase() === newSerial.toLowerCase());
         });
 
         if (duplicateItem) {
@@ -150,6 +162,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
     if (serialNumbers.length > 1 && onSubmitMultiple) {
       const itemsToCreate = serialNumbers.map(sn => ({
         ...formData,
+        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : new Date(),
         serialNumber: sn,
         quantity: 1, // Each item with a serial number has a quantity of 1
         allowDuplicates,
@@ -159,6 +172,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       // Standard single item submission
       onSubmit({
         ...formData,
+        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : new Date(),
         // Ensure quantity is at least 1 if not in multi-mode
         quantity: formData.quantity > 0 ? formData.quantity : 1,
         serialNumber: serialNumbers.join(', '), // Consolidate back to a string
@@ -293,7 +307,22 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
       // Multiple items - use the onSubmitMultiple callback if available
       if (onSubmitMultiple) {
         toast.info(`Adding ${selectedItems.length} items to inventory...`);
-        onSubmitMultiple(selectedItems);
+        // Transform ExtractedItem to match InventoryItem type
+        const transformedItems = selectedItems.map(item => ({
+          name: item.name,
+          category: item.category,
+          quantity: item.quantity,
+          price: item.price,
+          totalPrice: item.totalPrice,
+          supplier: item.supplier,
+          model: item.model,
+          serialNumber: item.serialNumber,
+          warranty: item.warranty,
+          purchaseDate: item.purchaseDate ? new Date(item.purchaseDate) : new Date(),
+          location: item.location,
+          description: item.description,
+        }));
+        onSubmitMultiple(transformedItems);
       } else {
         toast.error("Multiple item submission is not supported in this context");
       }
@@ -545,14 +574,15 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
 
               <div className="space-y-2">
                 <Label htmlFor="purchaseDate" className="text-sm font-semibold flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  Purchase Date
+                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                  Purchase Date <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="purchaseDate"
                   type="date"
                   value={formData.purchaseDate}
                   onChange={(e) => handleChange('purchaseDate', e.target.value)}
+                  required
                   className="h-11"
                 />
               </div>

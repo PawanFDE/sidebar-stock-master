@@ -44,6 +44,7 @@ const inventoryItemSchema = mongoose.Schema(
     },
     purchaseDate: {
       type: Date,
+      required: true,
     },
     location: {
       type: String,

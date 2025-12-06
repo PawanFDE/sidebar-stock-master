@@ -44,7 +44,7 @@ async function checkDuplicateSerialNumbers(serialNumber, excludeItemId = null) {
 
   for (const item of existingItems) {
     if (!item.serialNumber) continue;
-    const existingSerials = item.serialNumber.split(',').map(s => s.trim());
+    const existingSerials = item.serialNumber.split(',').map(s => s.trim()).filter(s => s);
     
     for (const newSerial of newSerials) {
       // Case-insensitive comparison
@@ -103,6 +103,9 @@ const createInventoryItem = async (req, res) => {
       }
     }
 
+    // Ensure purchaseDate is provided, default to current date if not
+    const finalPurchaseDate = purchaseDate ? new Date(purchaseDate) : new Date();
+
     const warrantyExpiryDate = calculateWarrantyExpiry(warranty);
 
     // Check if serial numbers are provided
@@ -126,7 +129,7 @@ const createInventoryItem = async (req, res) => {
             serialNumber: sn,
             warranty,
             warrantyExpiryDate,
-            purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
+            purchaseDate: finalPurchaseDate,
             location,
             status: 'in-stock',
             description,
@@ -155,7 +158,7 @@ const createInventoryItem = async (req, res) => {
           serialNumber: serialNumbers[0],
           warranty,
           warrantyExpiryDate,
-          purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
+          purchaseDate: finalPurchaseDate,
           location,
           status: 'in-stock',
           description,
@@ -179,7 +182,7 @@ const createInventoryItem = async (req, res) => {
         serialNumber: '',
         warranty,
         warrantyExpiryDate,
-        purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
+        purchaseDate: finalPurchaseDate,
         location,
         status: quantity === 0 ? 'out-of-stock' : 'in-stock',
         description,
