@@ -2,10 +2,28 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInventoryController } from "@/controllers/useInventoryController";
-import { ArrowLeft, BarChart3, Calendar, DollarSign, PieChart, TrendingDown, TrendingUp } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { ArrowLeft, BarChart3, Calendar, DollarSign, FileDown, PieChart, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +32,10 @@ export default function SpendingAnalytics() {
   const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [viewMode, setViewMode] = useState<'overview' | 'categories' | 'timeline'>('overview');
+  
+  // Export Dialog State
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportMonth, setExportMonth] = useState<string>('all');
 
   // Get available years from items
   const availableYears = useMemo(() => {
@@ -131,6 +153,153 @@ export default function SpendingAnalytics() {
     return colors[index % colors.length];
   };
 
+  // Export Yearly Summary PDF
+  const exportYearlySummary = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Spending Analytics - Yearly Summary', 14, 22);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Year: ${selectedYear}`, 14, 30);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 36);
+    
+    // Summary Stats
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Summary', 14, 48);
+    
+    doc.setFontSize(10);
+    doc.text(`Total Spending: ${formatCurrency(totalYearlySpending)}`, 14, 56);
+    doc.text(`Categories: ${categoryYearlyTotals.length}`, 14, 62);
+    doc.text(`Average Monthly: ${formatCurrency(stats.avgMonthly)}`, 14, 68);
+    doc.text(`Highest Month: ${stats.maxMonth.month} (${formatCurrency(stats.maxMonth.amount)})`, 14, 74);
+    doc.text(`Lowest Month: ${stats.minMonth.month} (${formatCurrency(stats.minMonth.amount)})`, 14, 80);
+    
+    // Category Breakdown Table
+    const categoryData = categoryYearlyTotals.map(([category, total]) => {
+      const percentage = (total / totalYearlySpending) * 100;
+      return [
+        category,
+        formatCurrency(total),
+        `${percentage.toFixed(1)}%`
+      ];
+    });
+    
+    autoTable(doc, {
+      startY: 90,
+      head: [['Category', 'Amount', 'Percentage']],
+      body: categoryData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 10 },
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'right' }
+      }
+    });
+    
+    // Save PDF
+    doc.save(`Spending-Summary-${selectedYear}.pdf`);
+  };
+
+  // Export Monthly Report PDF
+  const exportMonthlyReport = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Spending Analytics - Monthly Report', 14, 22);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Year: ${selectedYear}`, 14, 30);
+    if (exportMonth !== 'all') {
+      doc.text(`Month: ${exportMonth}`, 14, 36);
+    }
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, exportMonth !== 'all' ? 42 : 36);
+    
+    let yPosition = exportMonth !== 'all' ? 56 : 50;
+    
+    // Filter months based on selection
+    const monthsToExport = exportMonth === 'all' 
+      ? monthlySpendingByCategory.months 
+      : [exportMonth];
+    
+    // Monthly breakdown
+    monthsToExport.forEach((month) => {
+      const monthTotal = monthlySpendingByCategory.monthlyTotals[month] || 0;
+      
+      // If specific month selected, show even if 0. If 'all', skip 0 months.
+      if (monthTotal > 0 || exportMonth !== 'all') {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        // Month header
+        doc.setFontSize(14);
+        doc.setTextColor(40, 40, 40);
+        doc.text(`${month} - ${formatCurrency(monthTotal)}`, 14, yPosition);
+        yPosition += 8;
+        
+        // Get categories for this month
+        const categoriesInMonth = Object.entries(monthlySpendingByCategory.categorySpending)
+          .map(([cat, months]) => ({
+            category: cat,
+            amount: months[month] || 0
+          }))
+          .filter(item => item.amount > 0)
+          .sort((a, b) => b.amount - a.amount);
+        
+        if (categoriesInMonth.length > 0) {
+          const monthData = categoriesInMonth.map((item) => {
+            const percentage = monthTotal > 0 ? (item.amount / monthTotal) * 100 : 0;
+            return [
+              item.category,
+              formatCurrency(item.amount),
+              `${percentage.toFixed(1)}%`
+            ];
+          });
+          
+          autoTable(doc, {
+            startY: yPosition,
+            head: [['Category', 'Amount', '% of Month']],
+            body: monthData,
+            theme: 'striped',
+            headStyles: { fillColor: [59, 130, 246], textColor: 255, fontSize: 9 },
+            styles: { fontSize: 8 },
+            columnStyles: {
+              1: { halign: 'right' },
+              2: { halign: 'right' }
+            },
+            margin: { left: 14, right: 14 }
+          });
+          
+          yPosition = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(10);
+          doc.setTextColor(100, 100, 100);
+          doc.text('No spending recorded for this month.', 14, yPosition);
+          yPosition += 10;
+        }
+      }
+    });
+    
+    // Save PDF
+    const fileName = exportMonth === 'all' 
+      ? `Spending-Monthly-Report-${selectedYear}.pdf`
+      : `Spending-Report-${selectedYear}-${exportMonth}.pdf`;
+      
+    doc.save(fileName);
+    setShowExportDialog(false);
+  };
+
   return (
     <div className="space-y-6 p-6 bg-gradient-to-br from-background to-muted/20 min-h-screen">
       {/* Header */}
@@ -147,6 +316,33 @@ export default function SpendingAnalytics() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Export PDF
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Export Reports</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={exportYearlySummary} className="gap-2">
+                <DollarSign className="h-4 w-4" />
+                <div>
+                  <div className="font-medium">Yearly Summary</div>
+                  <div className="text-xs text-muted-foreground">Annual overview with categories</div>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowExportDialog(true)} className="gap-2">
+                <Calendar className="h-4 w-4" />
+                <div>
+                  <div className="font-medium">Monthly Report</div>
+                  <div className="text-xs text-muted-foreground">Month-by-month breakdown</div>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Select value={selectedYear} onValueChange={setSelectedYear}>
             <SelectTrigger className="w-[180px]">
               <Calendar className="h-4 w-4 mr-2" />
@@ -459,6 +655,44 @@ export default function SpendingAnalytics() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Export Monthly Report</DialogTitle>
+            <DialogDescription>
+              Select a specific month to export or choose "All Months" for a complete report.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Month</label>
+              <Select value={exportMonth} onValueChange={setExportMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  {monthlySpendingByCategory.months.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={exportMonthlyReport}>
+              Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
