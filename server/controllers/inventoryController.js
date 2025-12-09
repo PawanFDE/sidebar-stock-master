@@ -1,5 +1,6 @@
 const InventoryItem = require('../models/inventory');
 const Category = require('../models/category');
+const Transaction = require('../models/transaction');
 const { extractInvoiceData } = require('../utils/gemini');
 
 // Helper to calculate warranty expiry
@@ -90,7 +91,7 @@ const getInventoryItemById = async (req, res) => {
 // @route   POST /api/inventory
 // @access  Public
 const createInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
+  const { name, category, quantity, maxStock, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
 
   try {
     // Check for duplicate serial numbers
@@ -123,7 +124,6 @@ const createInventoryItem = async (req, res) => {
             category,
             quantity: 1, // Each item with unique serial number has quantity 1
             maxStock,
-            price,
             supplier,
             model,
             serialNumber: sn,
@@ -139,6 +139,18 @@ const createInventoryItem = async (req, res) => {
           
           const createdItem = await item.save();
           createdItems.push(createdItem);
+
+          // Audit Log: Create Item
+          await Transaction.create({
+            itemId: createdItem._id,
+            itemName: createdItem.name,
+            itemCategory: createdItem.category,
+            type: 'create_item',
+            quantity: createdItem.quantity,
+            branch: createdItem.location,
+            performedBy: req.user._id,
+            reason: 'Item created via batch upload/entry'
+          });
         }
         
         return res.status(201).json({ 
@@ -152,7 +164,6 @@ const createInventoryItem = async (req, res) => {
           category,
           quantity: 1,
           maxStock,
-          price,
           supplier,
           model,
           serialNumber: serialNumbers[0],
@@ -167,6 +178,19 @@ const createInventoryItem = async (req, res) => {
         });
 
         const createdItem = await item.save();
+
+        // Audit Log: Create Item
+        await Transaction.create({
+          itemId: createdItem._id,
+          itemName: createdItem.name,
+          itemCategory: createdItem.category,
+          type: 'create_item',
+          quantity: createdItem.quantity,
+          branch: createdItem.location,
+          performedBy: req.user._id,
+          reason: 'Item created'
+        });
+
         return res.status(201).json(createdItem);
       }
     } else {
@@ -176,7 +200,6 @@ const createInventoryItem = async (req, res) => {
         category,
         quantity,
         maxStock,
-        price,
         supplier,
         model,
         serialNumber: '',
@@ -191,6 +214,19 @@ const createInventoryItem = async (req, res) => {
       });
 
       const createdItem = await item.save();
+
+      // Audit Log: Create Item
+      await Transaction.create({
+        itemId: createdItem._id,
+        itemName: createdItem.name,
+        itemCategory: createdItem.category,
+        type: 'create_item',
+        quantity: createdItem.quantity,
+        branch: createdItem.location,
+        performedBy: req.user._id,
+        reason: 'Item created'
+      });
+
       return res.status(201).json(createdItem);
     }
   } catch (error) {
@@ -203,7 +239,7 @@ const createInventoryItem = async (req, res) => {
 // @route   PUT /api/inventory/:id
 // @access  Public
 const updateInventoryItem = async (req, res) => {
-  const { name, category, quantity, maxStock, price, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
+  const { name, category, quantity, maxStock, supplier, model, serialNumber, warranty, purchaseDate, location, description, allowDuplicates } = req.body;
 
   try {
     const item = await InventoryItem.findById(req.params.id);
@@ -219,11 +255,19 @@ const updateInventoryItem = async (req, res) => {
          }
       }
 
+      // Track changes for Audit Log
+      const changes = [];
+      if (name !== undefined && name !== item.name) changes.push('name');
+      if (category !== undefined && category !== item.category) changes.push('category');
+      if (quantity !== undefined && quantity !== item.quantity) changes.push('quantity');
+      if (maxStock !== undefined && maxStock !== item.maxStock) changes.push('maxStock');
+      if (supplier !== undefined && supplier !== item.supplier) changes.push('supplier');
+      if (location !== undefined && location !== item.location) changes.push('location');
+      
       item.name = name !== undefined ? name : item.name;
       item.category = category !== undefined ? category : item.category;
       item.quantity = quantity !== undefined ? quantity : item.quantity;
       item.maxStock = maxStock !== undefined ? maxStock : item.maxStock;
-      item.price = price !== undefined ? price : item.price;
       item.supplier = supplier !== undefined ? supplier : item.supplier;
       item.model = model !== undefined ? model : item.model;
       item.serialNumber = serialNumber !== undefined ? serialNumber : item.serialNumber;
@@ -245,6 +289,21 @@ const updateInventoryItem = async (req, res) => {
       item.status = item.quantity === 0 ? 'out-of-stock' : 'in-stock';
 
       const updatedItem = await item.save();
+
+      // Audit Log: Update Item
+      if (changes.length > 0) {
+        await Transaction.create({
+          itemId: updatedItem._id,
+          itemName: updatedItem.name,
+          itemCategory: updatedItem.category,
+          type: 'update_item',
+          quantity: updatedItem.quantity, // Log current quantity
+          branch: updatedItem.location,
+          performedBy: req.user._id,
+          reason: `Updated: ${changes.join(', ')}`
+        });
+      }
+
       res.json(updatedItem);
     } else {
       res.status(404).json({ message: 'Item not found' });
@@ -262,6 +321,18 @@ const deleteInventoryItem = async (req, res) => {
     const item = await InventoryItem.findById(req.params.id);
 
     if (item) {
+      // Audit Log: Delete Item
+      await Transaction.create({
+        itemId: item._id,
+        itemName: item.name,
+        itemCategory: item.category,
+        type: 'delete_item',
+        quantity: item.quantity,
+        branch: item.location,
+        performedBy: req.user._id,
+        reason: 'Item deleted permanently'
+      });
+
       await item.deleteOne();
       res.json({ message: 'Item removed' });
     } else {

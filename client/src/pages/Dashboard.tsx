@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventoryController } from "@/controllers/useInventoryController";
-import { Activity, AlertCircle, ArrowUpRight, DollarSign, FolderOpen, Package, TrendingDown, Users } from "lucide-react";
+import { Activity, AlertCircle, ArrowUpRight, FolderOpen, Package, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -58,27 +58,7 @@ export default function Dashboard() {
     )
     .slice(0, 5);
 
-  // Calculate total spending for current year
-  const currentYear = new Date().getFullYear();
-  const yearlySpending = allItems
-    .filter(item => {
-      if (!item.createdAt) return false;
-      const itemYear = new Date(item.createdAt).getFullYear();
-      return itemYear === currentYear;
-    })
-    .reduce((total, item) => {
-      const itemTotal = (item.price || 0) * (item.quantity || 1);
-      return total + itemTotal;
-    }, 0);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
 
 
@@ -124,18 +104,7 @@ export default function Dashboard() {
           variant="default"
           className="bg-purple-50/50 border-purple-100 dark:bg-purple-950/20 dark:border-purple-900"
         />
-        <div 
-          onClick={() => navigate('/spending-analytics')}
-          className="cursor-pointer transition-transform hover:scale-[1.02]"
-        >
-          <StatsCard
-            title={`Spending ${currentYear}`}
-            value={formatCurrency(yearlySpending)}
-            icon={DollarSign}
-            variant="default"
-            className="bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900"
-          />
-        </div>
+
         
       </div>
 

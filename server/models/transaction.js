@@ -5,7 +5,10 @@ const transactionSchema = new mongoose.Schema(
     itemId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'InventoryItem',
-      required: true,
+      // Required mostly, but not for system-wide events like User creation
+      required: function() {
+        return !['create_user', 'delete_user', 'create_category', 'delete_category', 'system_change'].includes(this.type);
+      }
     },
     itemName: {
       type: String,
@@ -16,11 +19,20 @@ const transactionSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['in', 'out', 'return', 'transfer', 'confirmation'],
+      enum: [
+        'in', 'out', 'return', 'transfer', 'confirmation', 
+        'create_item', 'update_item', 'delete_item', 
+        'create_category', 'delete_category', 
+        'create_user', 'delete_user', 
+        'system_change'
+      ],
     },
     quantity: {
       type: Number,
-      required: true,
+      // Quantity is not relevant for system configuration changes
+      required: function() {
+        return !['create_item', 'update_item', 'delete_item', 'create_user', 'delete_user', 'create_category', 'delete_category', 'system_change'].includes(this.type);
+      }
     },
     branch: {
       type: String,

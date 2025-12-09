@@ -1,28 +1,28 @@
 // View - Transferred Items List Page (Excel-like Sheet View)
-import { ReturnForm } from "@/components/inventory/ReturnForm";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import { InventoryItem } from "@/models/inventory";
-import { ArrowLeftRight, ArrowUpDown, Calendar, Download, Filter, Hash, MapPin, Package, Search, X } from "lucide-react";
+import { ArrowUpDown, Calendar, Download, Filter, Hash, MapPin, Package, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import fedBranchesData from "../fed_branches.json";
 
@@ -50,19 +50,15 @@ type FlatTransferredItem = Pick<InventoryItem, 'id' | 'name' | 'category'> & {
   branch: string;
 };
 
-type SelectedReturnItem = (Pick<InventoryItem, 'id' | 'name'> & { 
-  quantity: number;
-  itemTrackingId?: string;
-});
 
-type SortField = 'name' | 'category' | 'branch' | 'transferDate' | 'quantity' | 'itemTrackingId';
+
+type SortField = 'name' | 'category' | 'branch' | 'transferDate' | 'quantity' | 'itemTrackingId' | 'reason';
 type SortDirection = 'asc' | 'desc';
 
 export default function TransferredItemsList() {
   const { getTransferredItems, createTransaction, loading, categories } = useInventoryController();
   const [groupedItems, setGroupedItems] = useState<TransferredItemGroup[]>([]);
-  const [returnItem, setReturnItem] = useState<SelectedReturnItem | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState<string>('');
+
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortField, setSortField] = useState<SortField>('branch');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -83,27 +79,7 @@ export default function TransferredItemsList() {
     fetchItems();
   }, [getTransferredItems]);
 
-  const handleOpenReturnDialog = (item: SelectedReturnItem, branch: string) => {
-    setReturnItem(item);
-    setSelectedBranch(branch);
-  };
 
-  const handleCloseReturnDialog = () => {
-    setReturnItem(null);
-    setSelectedBranch('');
-  };
-
-  const handleReturnSubmit = async (transactionData: {
-    itemId: string;
-    type: 'return';
-    quantity: number;
-    branch: string;
-    itemTrackingId?: string;
-  }) => {
-    await createTransaction(transactionData);
-    handleCloseReturnDialog();
-    fetchItems(); // Re-fetch the items to update the list
-  };
 
   // Flatten grouped items into a single array
   const flattenedItems = useMemo<FlatTransferredItem[]>(() => {
@@ -545,7 +521,16 @@ export default function TransferredItemsList() {
                           <SortIcon field="transferDate" />
                         </div>
                       </TableHead>
-                      <TableHead className="text-right bg-muted/50">Actions</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-muted/80 select-none bg-muted/50"
+                        onClick={() => handleSort('reason')}
+                      >
+                        <div className="flex items-center">
+                          Transfer Reason
+                          <SortIcon field="reason" />
+                        </div>
+                      </TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -600,17 +585,10 @@ export default function TransferredItemsList() {
                             <span className="text-muted-foreground text-sm">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 border-dashed hover:border-solid hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950"
-                            onClick={() => handleOpenReturnDialog(item, item.branch)}
-                          >
-                            <ArrowLeftRight className="h-3.5 w-3.5 mr-1.5" />
-                            Return
-                          </Button>
+                        <TableCell className="text-sm text-muted-foreground">
+                           {item.reason || '-'}
                         </TableCell>
+
                       </TableRow>
                     ))}
                   </TableBody>
@@ -625,13 +603,7 @@ export default function TransferredItemsList() {
         </CardContent>
       </Card>
 
-      <ReturnForm
-        item={returnItem}
-        branch={selectedBranch}
-        isOpen={!!returnItem}
-        onClose={handleCloseReturnDialog}
-        onSubmit={handleReturnSubmit}
-      />
+
     </div>
   );
 }

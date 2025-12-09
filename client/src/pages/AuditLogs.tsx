@@ -1,14 +1,24 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +33,11 @@ interface AuditLog {
   itemId: string;
   itemName: string;
   itemCategory: string;
-  type: 'in' | 'out' | 'return' | 'transfer' | 'confirmation';
+  type: 'in' | 'out' | 'return' | 'transfer' | 'confirmation' | 
+        'create_item' | 'update_item' | 'delete_item' | 
+        'create_category' | 'delete_category' | 
+        'create_user' | 'delete_user' | 
+        'system_change';
   quantity: number;
   branch?: string;
   reason?: string;
@@ -44,6 +58,8 @@ export default function AuditLogs() {
   const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: logs, isLoading: isLoadingLogs } = useQuery({
     queryKey: ['auditLogs'],
@@ -85,9 +101,16 @@ export default function AuditLogs() {
     },
   });
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this log? This action cannot be undone.")) {
-      deleteMutation.mutate(id);
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId);
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
     }
   };
 
@@ -181,14 +204,14 @@ export default function AuditLogs() {
                       <TableCell>
                         <Badge 
                           variant={
-                            log.type === 'in' ? 'default' :
-                            log.type === 'out' ? 'destructive' :
-                            log.type === 'transfer' ? 'secondary' : 
+                            ['in', 'create_item', 'create_category', 'create_user'].includes(log.type) ? 'default' :
+                            ['out', 'delete_item', 'delete_category', 'delete_user'].includes(log.type) ? 'destructive' :
+                            ['transfer', 'update_item'].includes(log.type) ? 'secondary' : 
                             log.type === 'confirmation' ? 'outline' : 'outline'
                           }
                           className={log.type === 'confirmation' ? 'border-blue-500 text-blue-500' : ''}
                         >
-                          {log.type.toUpperCase()}
+                          {log.type.replace(/_/g, ' ').toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -199,11 +222,11 @@ export default function AuditLogs() {
                       </TableCell>
                       <TableCell>
                         <span className={`font-bold ${
-                          log.type === 'in' || log.type === 'return' ? 'text-green-600' : 
-                          log.type === 'confirmation' ? 'text-blue-600' : 'text-red-600'
+                          ['in', 'return', 'create_item'].includes(log.type) ? 'text-green-600' : 
+                          ['confirmation', 'update_item', 'create_category', 'delete_category', 'create_user', 'delete_user'].includes(log.type) ? 'text-blue-600' : 'text-red-600'
                         }`}>
-                          {log.type === 'in' || log.type === 'return' ? '+' : 
-                           log.type === 'confirmation' ? '' : '-'}{log.quantity}
+                          {['in', 'return', 'create_item'].includes(log.type) ? '+' : 
+                           ['confirmation', 'update_item', 'create_category', 'delete_category', 'create_user', 'delete_user'].includes(log.type) ? '' : '-'}{log.quantity || '-'}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -238,7 +261,7 @@ export default function AuditLogs() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                          onClick={() => handleDelete(log.id || log._id)}
+                          onClick={() => handleDeleteClick(log.id || log._id)}
                           disabled={deleteMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -302,6 +325,23 @@ export default function AuditLogs() {
           </div>
         )}
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the audit log entry.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

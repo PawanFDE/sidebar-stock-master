@@ -2,25 +2,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Category, InventoryItem } from "@/models/inventory";
 import axios from "axios";
-import { AlertCircle, Building2, Calendar, CheckCircle2, DollarSign, Hash, Loader2, MapPin, Package, Shield, Tag, Upload } from "lucide-react";
+import { AlertCircle, Building2, Calendar, CheckCircle2, Hash, Loader2, MapPin, Package, Shield, Tag, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
@@ -39,8 +39,7 @@ interface ExtractedItem {
   name: string;
   category: string;
   quantity: number;
-  price?: number;
-  totalPrice?: number;
+
   supplier: string;
   model?: string;
   serialNumber?: string;
@@ -58,8 +57,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
     name: item?.name || '',
     category: item?.category || '',
     quantity: item?.quantity || 0,
-    price: item?.price || 0,
-    totalPrice: item?.totalPrice || 0,
+
     supplier: item?.supplier || '',
     model: item?.model || '',
     serialNumber: item?.serialNumber || '',
@@ -227,8 +225,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
             name: extractedData.name || prev.name,
             category: extractedData.category || prev.category,
             quantity: extractedData.quantity || prev.quantity,
-            price: extractedData.price || prev.price,
-            totalPrice: extractedData.totalPrice || prev.totalPrice,
+
             supplier: extractedData.supplier || prev.supplier,
             model: extractedData.model || prev.model,
             serialNumber: extractedData.serialNumber 
@@ -293,8 +290,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
         name: item.name,
         category: item.category,
         quantity: item.quantity,
-        price: item.price || 0,
-        totalPrice: item.totalPrice || 0,
+
         supplier: item.supplier,
         model: item.model || '',
         serialNumber: item.serialNumber || '',
@@ -312,8 +308,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
           name: item.name,
           category: item.category,
           quantity: item.quantity,
-          price: item.price,
-          totalPrice: item.totalPrice,
+
           supplier: item.supplier,
           model: item.model,
           serialNumber: item.serialNumber,
@@ -526,37 +521,7 @@ export function ItemForm({ item, categories, existingItems = [], onSubmit, onSub
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="price" className="text-sm font-semibold flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5 text-primary" />
-                  Unit Price
-                </Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
-                  min="0"
-                  step="0.01"
-                  className="h-11"
-                />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="totalPrice" className="text-sm font-semibold flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5 text-primary" />
-                  Total Price
-                </Label>
-                <Input
-                  id="totalPrice"
-                  type="number"
-                  value={formData.totalPrice}
-                  onChange={(e) => handleChange('totalPrice', parseFloat(e.target.value) || 0)}
-                  min="0"
-                  step="0.01"
-                  className="h-11"
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="warranty" className="text-sm font-semibold flex items-center gap-1.5">

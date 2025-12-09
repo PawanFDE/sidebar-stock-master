@@ -15,14 +15,7 @@ const inventoryItemSchema = mongoose.Schema(
       required: true,
       default: 0,
     },
-    price: {
-      type: Number,
-      default: 0,
-    },
-    totalPrice: {
-      type: Number,
-      default: 0,
-    },
+
     maxStock: {
       type: Number,
       default: 0,

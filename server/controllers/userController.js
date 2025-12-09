@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Transaction = require("../models/transaction");
 const jwt = require("jsonwebtoken");
 
 // Generate JWT
@@ -96,6 +97,15 @@ const addSubAdmin = async (req, res) => {
         username: subAdmin.username,
         role: subAdmin.role,
       });
+
+      // Audit Log: Create User
+      await Transaction.create({
+        type: 'create_user',
+        itemName: subAdmin.username, // Using itemName to store username
+        itemCategory: 'User',
+        performedBy: req.user._id,
+        reason: 'Sub-admin created'
+      });
     } else {
       res.status(400).json({ message: "Invalid sub-admin data" });
     }
@@ -130,6 +140,15 @@ const deleteSubAdmin = async (req, res) => {
     if (user.role !== "subadmin") {
       return res.status(400).json({ message: "Can only delete sub-admins" });
     }
+
+    // Audit Log: Delete User
+    await Transaction.create({
+      type: 'delete_user',
+      itemName: user.username,
+      itemCategory: 'User',
+      performedBy: req.user._id,
+      reason: 'Sub-admin deleted'
+    });
 
     await User.deleteOne({ _id: req.params.id });
     res.status(200).json({ message: "Sub-admin removed" });

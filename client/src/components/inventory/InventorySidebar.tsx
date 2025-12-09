@@ -29,7 +29,7 @@ import {
     ArrowRightLeft,
     ClipboardList,
     Clock,
-    DollarSign,
+
     FolderOpen,
     LayoutDashboard,
     LogOut,
@@ -57,7 +57,7 @@ const navigationItems = [
     icon: ClipboardList,
   },
   { title: "Categories", url: "/categories", icon: FolderOpen },
-  { title: "Spending Analytics", url: "/spending-analytics", icon: DollarSign },
+
 ];
 
 export function InventorySidebar() {

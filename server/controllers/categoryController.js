@@ -1,4 +1,5 @@
 const Category = require('../models/category');
+const Transaction = require('../models/transaction');
 
 // @desc    Get all categories
 // @route   GET /api/categories
@@ -44,6 +45,15 @@ const createCategory = async (req, res) => {
     });
 
     const createdCategory = await category.save();
+
+    // Audit Log: Create Category
+    await Transaction.create({
+      type: 'create_category',
+      itemName: createdCategory.name,
+      performedBy: req.user._id,
+      reason: 'Category created'
+    });
+
     res.status(201).json(createdCategory);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -83,6 +93,14 @@ const deleteCategory = async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
+
+    // Audit Log: Delete Category
+    await Transaction.create({
+      type: 'delete_category',
+      itemName: category.name,
+      performedBy: req.user._id,
+      reason: 'Category deleted'
+    });
 
     await category.deleteOne();
     res.status(200).json({ message: 'Category removed' });
