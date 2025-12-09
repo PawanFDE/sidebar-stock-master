@@ -1,4 +1,5 @@
 // View - Inventory List Page
+import { DirectTransferForm } from "@/components/inventory/DirectTransferForm";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { ItemForm } from "@/components/inventory/ItemForm";
 import { TransactionForm } from "@/components/inventory/TransactionForm";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useInventoryController } from "@/controllers/useInventoryController";
 import { InventoryItem } from "@/models/inventory";
-import { Plus, Search } from "lucide-react";
+import { ArrowLeftRight, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,6 +38,12 @@ export default function InventoryList() {
   const [transactionItem, setTransactionItem] = useState<InventoryItem | null>(null);
   const [transferSerial, setTransferSerial] = useState<string>("");
   const [viewingItem, setViewingItem] = useState<InventoryItem | null>(null);
+  const [isDirectTransferOpen, setIsDirectTransferOpen] = useState(false);
+
+  const handleDirectTransferSubmit = (transactionData: any) => {
+    createTransaction(transactionData);
+    setIsDirectTransferOpen(false);
+  };
 
   const handleView = (item: InventoryItem) => {
     setViewingItem(item);
@@ -86,10 +93,20 @@ export default function InventoryList() {
           <h1 className="text-3xl font-bold text-foreground">Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage all your inventory items</p>
         </div>
+        <div className="flex gap-2">
         <Button onClick={() => navigate('/add-item')}>
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setIsDirectTransferOpen(true)}
+          className="ml-2 gap-2"
+        >
+          <ArrowLeftRight className="h-4 w-4" />
+          Direct Transfer
+        </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -235,6 +252,13 @@ export default function InventoryList() {
         onClose={() => setTransactionItem(null)}
         initialSerialNumber={transferSerial}
         onSubmit={handleCreateTransaction}
+      />
+
+      <DirectTransferForm
+        isOpen={isDirectTransferOpen}
+        onClose={() => setIsDirectTransferOpen(false)}
+        onSubmit={handleDirectTransferSubmit}
+        categories={categories}
       />
     </div>
   );

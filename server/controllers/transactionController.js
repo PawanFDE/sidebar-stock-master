@@ -110,10 +110,12 @@ const createTransaction = async (req, res) => {
 // @route   POST /api/transactions/transfer
 // @access  Public
 const transferItem = async (req, res) => {
-  const { itemId, quantity, branch, assetNumber, model, serialNumber, itemTrackingId, reason } = req.body;
+  const { itemId, itemName, itemCategory, quantity, branch, assetNumber, model, serialNumber, itemTrackingId, reason } = req.body;
 
-  if (!itemId || !quantity || !branch || !itemTrackingId) {
-    return res.status(400).json({ message: 'Missing required fields for transfer: itemId, quantity, branch, itemTrackingId' });
+  // Validate required fields
+  // If itemId is provided, we use it. If not, we need itemName and itemCategory to create a new one.
+  if ((!itemId && (!itemName || !itemCategory)) || !quantity || !branch || !itemTrackingId) {
+    return res.status(400).json({ message: 'Missing required fields. Provide either itemId OR (itemName and itemCategory), plus quantity, branch, and itemTrackingId.' });
   }
 
   // Validate Item Tracking ID format
@@ -130,10 +132,30 @@ const transferItem = async (req, res) => {
   }
 
   try {
-    const item = await InventoryItem.findById(itemId);
+    let item;
+    let isDirectTransfer = false;
 
-    if (!item) {
-      return res.status(404).json({ message: 'Inventory item not found' });
+    if (itemId) {
+      item = await InventoryItem.findById(itemId);
+      if (!item) {
+        return res.status(404).json({ message: 'Inventory item not found' });
+      }
+    } else {
+      // Direct Transfer: Create a new transient item
+      item = await InventoryItem.create({
+        name: itemName,
+        category: itemCategory,
+        quantity: quantity, // Initialize with the transfer quantity so it zeros out
+        branch: 'Main Inventory', // Temporary location
+        location: 'Main Inventory', // Required field
+        purchaseDate: new Date(), // Required field
+        status: 'in-stock',
+        model: model || '',
+        serialNumber: serialNumber || '',
+        createdBy: req.user._id,
+        lastUpdatedBy: req.user._id,
+      });
+      isDirectTransfer = true;
     }
 
     if (item.quantity < quantity) {
@@ -161,7 +183,7 @@ const transferItem = async (req, res) => {
 
     // Create the transfer transaction
     const transaction = new Transaction({
-      itemId,
+      itemId: item._id, // Use the (possibly deleted) item's ID
       itemName: item.name,
       itemCategory: item.category,
       type: 'transfer',
@@ -181,7 +203,7 @@ const transferItem = async (req, res) => {
     if (reason && reason.startsWith('Replacement Equipment')) {
       await PendingReplacement.create({
         transactionId: createdTransaction._id,
-        itemId,
+        itemId: item._id,
         itemName: item.name,
         branch,
         itemTrackingId,
@@ -194,6 +216,7 @@ const transferItem = async (req, res) => {
       transaction: createdTransaction,
       item: updatedItem,
       itemDeleted, // Flag to indicate if item was deleted
+      isDirectTransfer,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

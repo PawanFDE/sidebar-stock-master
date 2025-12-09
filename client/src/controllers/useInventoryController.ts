@@ -286,6 +286,8 @@ export const useInventoryController = () => {
   // Create a new transaction
   const createTransaction = useCallback(async (transactionData: {
     itemId: string;
+    itemName?: string;
+    itemCategory?: string;
     type: 'in' | 'out' | 'return' | 'transfer';
     quantity: number;
     branch?: string;
